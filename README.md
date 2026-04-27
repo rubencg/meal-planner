@@ -1,89 +1,81 @@
-# Tiki Meal Planner — Frontend
+# Tiki Meal Planner
 
-Tiki is a Spanish-language meal planning and nutrition tracking single-page application. It supports multiple users (*personas*) and covers the full nutrition workflow: body composition tracking, protein source management, per-slot macro targets, a weekly planner, and an auto-generated shopping list.
+Spanish-language meal planning and nutrition tracking app. Supports multiple users (*personas*) and covers the full nutrition workflow: body composition tracking, protein source management, per-slot macro targets, a weekly planner, and an auto-generated shopping list.
 
-## Features
+## Repository structure
 
-- **Multi-persona support** — switch between users from the sidebar; active persona is persisted across sessions.
-- **InBody tracker** — log body composition snapshots (weight, skeletal muscle mass, body fat %, BMI, visceral fat, BMR) and visualize trends with Chart.js.
-- **Protein library** — manage protein sources with raw-to-cooked conversion via cooking loss percentage.
-- **Meal plan** — define per-slot macro targets (protein, carbs, fruit) for each of 7 daily meal slots.
-- **Weekly planner** — assign proteins to meal slots across Monday–Friday, entering cooked grams; raw weight is calculated automatically.
-- **Shopping list** — automatically aggregates raw ingredient quantities for the current week.
+```
+tiki-meal-planner/
+├── frontend/       # React 18 + TypeScript + Vite SPA
+├── backend/        # Express + TypeScript + Prisma REST API
+└── docker-compose.yml
+```
 
-### Meal slots
+- [Frontend README](./frontend/README.md)
+- [Backend README](./backend/README.md)
 
-| Slot | Label |
-|---|---|
-| `desayuno` | Desayuno |
-| `snack1` | Snack Mañana |
-| `almuerzo` | Almuerzo |
-| `snack2` | Snack Tarde |
-| `cena` | Cena |
-| `preEntreno` | Pre-Entreno |
-| `postEntreno` | Post-Entreno |
+## Running locally
 
-## Tech stack
-
-- **React 18** + **TypeScript** — component UI
-- **Vite** — dev server and build tool
-- **Tailwind CSS v3** — styling with a custom dark theme and emerald green accent
-- **Chart.js** — InBody trend charts
-- **DM Sans / DM Mono** — typography (loaded from Google Fonts)
-
-No router library, no global state library. Page navigation is a single `useState` in `App.tsx`, persisted to `localStorage`.
-
-## Prerequisites
+### Prerequisites
 
 - Node.js 20+
-- The [Tiki backend](../backend) running on `http://localhost:3000`
+- PostgreSQL running and accessible
 
-## Getting started
+### 1. Backend
 
 ```bash
-# Install dependencies
+cd backend
 npm install
-
-# Start the dev server (http://localhost:5173)
-npm run dev
+cp .env.example .env   # then fill in DATABASE_URL and PORT
+npm run db:push        # create tables
+npm run dev            # http://localhost:3000
 ```
 
-The Vite dev server proxies all `/api` requests to `http://localhost:3000`, so the backend must be running for any data to load.
-
-## Available scripts
-
-| Command | Description |
-|---|---|
-| `npm run dev` | Start the Vite dev server on port 5173 |
-| `npm run build` | TypeScript check + production build (outputs to `dist/`) |
-| `npm run preview` | Serve the production build locally |
-
-## Docker
-
-A multi-stage Dockerfile is included. It builds the app with Node 20 and serves the static output with nginx.
+### 2. Frontend
 
 ```bash
-docker build -t tiki-frontend .
-docker run -p 80:80 tiki-frontend
+cd frontend
+npm install
+npm run dev            # http://localhost:5173
 ```
 
-## Project structure
+The Vite dev server proxies `/api` requests to `http://localhost:3000`, so the backend must be running for data to load.
 
+## Running with Docker
+
+The `docker-compose.yml` defines the `frontend` and `backend` services. PostgreSQL is **not** included — it is expected to be running in a separate Docker network named `pg_network`.
+
+### 1. Set up PostgreSQL on the `pg_network` network
+
+If you don't already have one running:
+
+```bash
+docker network create pg_network
+
+docker run -d \
+  --name postgres \
+  --network pg_network \
+  -e POSTGRES_PASSWORD=yourpassword \
+  -e POSTGRES_DB=tiki_meal_planner \
+  postgres:16-alpine
 ```
-src/
-├── api.ts          # Fetch wrapper — all backend calls go here
-├── App.tsx         # Root component, page routing via useState
-├── constants.ts    # Meal slot/day labels, weight conversion helpers
-├── types.ts        # Shared TypeScript types (Person, MealPlan, Protein, …)
-├── theme.ts        # Tailwind color tokens
-├── index.css       # Global styles
-├── components/
-│   └── Sidebar.tsx # Navigation + persona switcher
-└── pages/
-    ├── Dashboard.tsx    # Overview / home
-    ├── InBodyPage.tsx   # Body composition log & charts
-    ├── MealPlanPage.tsx # Per-slot macro targets
-    ├── PlannerPage.tsx  # Weekly meal planner grid
-    ├── ProteinsPage.tsx # Protein source management
-    └── ShoppingPage.tsx # Auto-generated shopping list
+
+### 2. Start the app
+
+```bash
+POSTGRES_PASSWORD=yourpassword docker compose up -d --build
+```
+
+| Variable | Default | Description |
+|---|---|---|
+| `POSTGRES_PASSWORD` | *(required)* | PostgreSQL password |
+| `POSTGRES_USER` | `postgres` | PostgreSQL user |
+| `POSTGRES_DB` | `tiki_meal_planner` | Database name |
+
+The frontend is served on **port 80**. The backend is only reachable internally (no host port exposed).
+
+### Stopping
+
+```bash
+docker compose down
 ```

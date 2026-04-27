@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Person {
+  id           String         @id
+  name         String
+  inBody       InBodyRecord[]
+  mealPlan     MealPlan?
+  plannerEntries PlannerEntry[]
+}
+
+model InBodyRecord {
+  id                  String   @id @default(cuid())
+  personId            String
+  person              Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  date                String
+  weight              Float?
+  skeletalMuscleMass  Float?
+  bodyFatMass         Float?
+  bodyFatPercent      Float?
+  bmi                 Float?
+  visceralFatLevel    Int?
+  bmr                 Int?
+  recommendedCalories Int?
+  waistHipRatio       Float?
+  createdAt           DateTime @default(now())
+
+  @@index([personId])
+}
+
+model Protein {
+  id           String         @id @default(cuid())
+  name         String
+  lossPercent  Int            @default(0)
+  notes        String?
+  plannerEntries PlannerEntry[]
+}
+
+model MealPlan {
+  id       String @id @default(cuid())
+  personId String @unique
+  person   Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  slots    Json
+}
+
+model PlannerEntry {
+  id          String   @id @default(cuid())
+  weekStart   String
+  personId    String
+  person      Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  day         String
+  slot        String
+  proteinId   String?
+  protein     Protein? @relation(fields: [proteinId], references: [id], onDelete: SetNull)
+  cookedGrams Int?
+
+  @@unique([weekStart, personId, day, slot])
+  @@index([weekStart])
+}
+
+model ShoppingHave {
+  id        String @id @default(cuid())
+  weekStart String
+  proteinId String
+
+  @@unique([weekStart, proteinId])
+}
