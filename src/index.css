@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  height: 100%;
+  background: #070f0a;
+  color: #e4f2eb;
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Prevent iOS bounce scroll on the root — pages handle their own scroll */
+body {
+  overscroll-behavior: none;
+}
+
+/* Thin scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1e3027; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #264035; }
+
+/* Number input spinner */
+input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
+
+/* Base resets */
+input, button { outline: none; font-family: 'DM Sans', sans-serif; }
+input:focus { border-color: #22c97a !important; }
+button:hover { opacity: 0.85; }
+
+/* Touch-friendly: eliminate 300ms tap delay everywhere */
+a, button, [role="button"] {
+  touch-action: manipulation;
+}
+
+/* date input color fix on dark bg */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+}
