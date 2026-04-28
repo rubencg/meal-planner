@@ -3,16 +3,18 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import InBodyPage from './pages/InBodyPage';
 import ProteinsPage from './pages/ProteinsPage';
+import CarbsPage from './pages/CarbsPage';
 import MealPlanPage from './pages/MealPlanPage';
 import PlannerPage from './pages/PlannerPage';
 import ShoppingPage from './pages/ShoppingPage';
 
-type Page = 'dashboard' | 'inbody' | 'proteinas' | 'plannutri' | 'planner' | 'compras';
+type Page = 'dashboard' | 'inbody' | 'proteinas' | 'carbos' | 'plannutri' | 'planner' | 'compras';
 
 const PAGES: Record<Page, React.ComponentType<PageProps>> = {
   dashboard: Dashboard,
   inbody:    InBodyPage,
   proteinas: ProteinsPage,
+  carbos:    CarbsPage,
   plannutri: MealPlanPage,
   planner:   PlannerPage,
   compras:   ShoppingPage,

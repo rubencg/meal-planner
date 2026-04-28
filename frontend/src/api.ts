@@ -1,4 +1,4 @@
-import type { Person, InBodyRecord, Protein, MealPlan, PlannerEntry, WeekDay, MealSlot } from './types';
+import type { Person, InBodyRecord, Protein, MealPlan, PlannerEntry, WeekDay, MealSlot, CarbFood } from './types';
 
 const BASE = '/api';
 
@@ -34,12 +34,29 @@ export const saveMealPlan = (personId: string, slots: MealPlan['slots']) => req<
 
 // Planner
 export const getWeek     = (weekStart: string) => req<PlannerEntry[]>(`/planner?weekStart=${weekStart}`);
-export const setSlot     = (data: { weekStart: string; personId: string; day: WeekDay; slot: MealSlot; proteinId?: string; cookedGrams?: number }) =>
-  req<PlannerEntry>('/planner', { method: 'POST', body: JSON.stringify(data) });
+export const setSlot     = (data: {
+  weekStart:    string;
+  personId:     string;
+  day:          WeekDay;
+  slot:         MealSlot;
+  proteinId?:   string;
+  cookedGrams?: number;
+  carbs?:       { carbFoodId: string; portions: number }[];
+}) => req<PlannerEntry>('/planner', { method: 'POST', body: JSON.stringify(data) });
 export const clearSlot   = (weekStart: string, personId: string, day: string, slot: string) =>
   req<void>(`/planner?weekStart=${weekStart}&personId=${personId}&day=${day}&slot=${slot}`, { method: 'DELETE' });
 export const clearWeek   = (weekStart: string, personId: string) =>
   req<void>(`/planner?weekStart=${weekStart}&personId=${personId}`, { method: 'DELETE' });
+
+// Carb foods
+export const getCarbFoods   = (personId: string) =>
+  req<CarbFood[]>(`/carb-foods?personId=${personId}`);
+export const createCarbFood = (data: Omit<CarbFood, 'id'>) =>
+  req<CarbFood>('/carb-foods', { method: 'POST', body: JSON.stringify(data) });
+export const updateCarbFood = (id: string, data: Partial<Omit<CarbFood, 'id' | 'personId'>>) =>
+  req<CarbFood>(`/carb-foods/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+export const deleteCarbFood = (id: string) =>
+  req<void>(`/carb-foods/${id}`, { method: 'DELETE' });
 
 // Shopping have
 export const getHave    = (weekStart: string)                                  => req<string[]>(`/shopping/have?weekStart=${weekStart}`);

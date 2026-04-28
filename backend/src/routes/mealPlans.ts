@@ -1,3 +1,14 @@
+// Slot JSON shape (MealPlan.slots is a plain JSON object keyed by slot name):
+// {
+//   protein: number;          // grams (unchanged)
+//   carbs:   number;          // PORTIONS (was: grams). Whole or half portions.
+//   fruit:   number;          // tazas (unchanged)
+//   notes:   string;
+//   carbSelections?: Array<{  // optional default selections for the slot
+//     carbFoodId: string;
+//     portions:   number;     // how many portions of this food (must sum to >= 0)
+//   }>;
+// }
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 

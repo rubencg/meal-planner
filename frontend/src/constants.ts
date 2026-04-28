@@ -1,4 +1,4 @@
-import type { MealSlot, WeekDay } from './types';
+import type { MealSlot, WeekDay, CarbFood } from './types';
 
 export const MEAL_SLOTS: MealSlot[] = ['desayuno', 'snack1', 'almuerzo', 'snack2', 'cena', 'preEntreno', 'postEntreno'];
 
@@ -79,4 +79,16 @@ export function todayKey(): WeekDay | null {
   const day = new Date().getDay();
   if (day === 0 || day === 6) return null;
   return (['', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes'] as (WeekDay | '')[]) [day] as WeekDay;
+}
+
+/** Returns "1 pza", "½ tza", "2 reb", etc. */
+export function formatPortionUnits(portions: number, food: Pick<CarbFood, 'unitLabel' | 'unitsPerPortion'>): string {
+  const units = portions * food.unitsPerPortion;
+  const whole = Math.floor(units);
+  const frac  = units - whole;
+  let qty: string;
+  if (frac === 0)        qty = String(whole);
+  else if (frac === 0.5) qty = whole === 0 ? '½' : `${whole}½`;
+  else                   qty = units.toFixed(2).replace(/\.?0+$/, '');
+  return `${qty} ${food.unitLabel}`;
 }

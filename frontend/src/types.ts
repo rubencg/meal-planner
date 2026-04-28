@@ -28,11 +28,35 @@ export interface Protein {
   notes?:      string | null;
 }
 
+export interface CarbFood {
+  id:              string;
+  personId:        string;
+  name:            string;
+  unitLabel:       string;
+  unitsPerPortion: number;
+  notes?:          string | null;
+  sortOrder:       number;
+}
+
+export interface CarbSelection {
+  carbFoodId: string;
+  portions:   number;
+}
+
+export interface PlannerCarb {
+  id:             string;
+  plannerEntryId: string;
+  carbFoodId:     string;
+  portions:       number;
+  carbFood?:      CarbFood;
+}
+
 export interface SlotData {
-  protein: number;
-  carbs:   number;
-  fruit:   number;
-  notes:   string;
+  protein:          number;
+  carbs:            number;        // PORTIONS (not grams)
+  fruit:            number;
+  notes:            string;
+  carbSelections?:  CarbSelection[];
 }
 
 export interface MealPlan {
@@ -42,12 +66,13 @@ export interface MealPlan {
 }
 
 export interface PlannerEntry {
-  id:          string;
-  weekStart:   string;
-  personId:    string;
-  day:         WeekDay;
-  slot:        MealSlot;
-  proteinId?:  string | null;
+  id:           string;
+  weekStart:    string;
+  personId:     string;
+  day:          WeekDay;
+  slot:         MealSlot;
+  proteinId?:   string | null;
   cookedGrams?: number | null;
-  protein?:    Protein | null;
+  protein?:     Protein | null;
+  carbs?:       PlannerCarb[];
 }

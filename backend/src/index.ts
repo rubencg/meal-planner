@@ -7,6 +7,7 @@ import proteinsRouter  from './routes/proteins';
 import mealPlansRouter from './routes/mealPlans';
 import plannerRouter   from './routes/planner';
 import shoppingRouter  from './routes/shopping';
+import carbFoodsRouter from './routes/carbFoods';
 
 const app  = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
@@ -20,6 +21,7 @@ app.use('/api/proteins',   proteinsRouter);
 app.use('/api/meal-plans', mealPlansRouter);
 app.use('/api/planner',    plannerRouter);
 app.use('/api/shopping',   shoppingRouter);
+app.use('/api/carb-foods', carbFoodsRouter);
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 

@@ -1,3 +1,4 @@
+// TODO: include carb foods in the shopping aggregation (PlannerCarb -> CarbFood).
 import { useState, useEffect, useMemo } from 'react';
 import { C } from '../theme';
 import * as api from '../api';

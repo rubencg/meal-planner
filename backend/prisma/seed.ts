@@ -37,30 +37,30 @@ async function main() {
     await prisma.inBodyRecord.upsert({ where: { id: r.id }, update: r, create: r });
   }
 
-  // Meal plans
+  // Meal plans — carbs are now PORTIONS (was: grams)
   const mealPlans = [
     {
       personId: 'ruben',
       slots: {
-        desayuno:    { protein: 50, carbs: 60, fruit: 0,   notes: '' },
-        snack1:      { protein: 30, carbs: 30, fruit: 0.5, notes: '½ taza de berries' },
-        almuerzo:    { protein: 60, carbs: 70, fruit: 0,   notes: '' },
-        snack2:      { protein: 30, carbs: 25, fruit: 0.5, notes: '½ taza de fruta' },
-        cena:        { protein: 55, carbs: 50, fruit: 0,   notes: '' },
-        preEntreno:  { protein: 25, carbs: 40, fruit: 0,   notes: '30 min antes' },
-        postEntreno: { protein: 40, carbs: 30, fruit: 0,   notes: 'Inmediatamente después' },
+        desayuno:    { protein: 50, carbs: 2,   fruit: 0,   notes: '' },
+        snack1:      { protein: 30, carbs: 1,   fruit: 0.5, notes: '½ taza de berries' },
+        almuerzo:    { protein: 60, carbs: 2.5, fruit: 0,   notes: '' },
+        snack2:      { protein: 30, carbs: 1,   fruit: 0.5, notes: '½ taza de fruta' },
+        cena:        { protein: 55, carbs: 1.5, fruit: 0,   notes: '' },
+        preEntreno:  { protein: 25, carbs: 1.5, fruit: 0,   notes: '30 min antes' },
+        postEntreno: { protein: 40, carbs: 1,   fruit: 0,   notes: 'Inmediatamente después' },
       },
     },
     {
       personId: 'sarahi',
       slots: {
-        desayuno:    { protein: 35, carbs: 45, fruit: 0,   notes: '' },
-        snack1:      { protein: 20, carbs: 20, fruit: 0.5, notes: '½ taza de berries' },
-        almuerzo:    { protein: 40, carbs: 50, fruit: 0,   notes: '' },
-        snack2:      { protein: 20, carbs: 20, fruit: 0.5, notes: '½ taza de fruta' },
-        cena:        { protein: 38, carbs: 35, fruit: 0,   notes: '' },
-        preEntreno:  { protein: 18, carbs: 25, fruit: 0,   notes: '' },
-        postEntreno: { protein: 28, carbs: 20, fruit: 0,   notes: '' },
+        desayuno:    { protein: 35, carbs: 1.5, fruit: 0,   notes: '' },
+        snack1:      { protein: 20, carbs: 0.5, fruit: 0.5, notes: '½ taza de berries' },
+        almuerzo:    { protein: 40, carbs: 1.5, fruit: 0,   notes: '' },
+        snack2:      { protein: 20, carbs: 0.5, fruit: 0.5, notes: '½ taza de fruta' },
+        cena:        { protein: 38, carbs: 1,   fruit: 0,   notes: '' },
+        preEntreno:  { protein: 18, carbs: 1,   fruit: 0,   notes: '' },
+        postEntreno: { protein: 28, carbs: 0.5, fruit: 0,   notes: '' },
       },
     },
   ];
@@ -70,6 +70,32 @@ async function main() {
       update: { slots: mp.slots },
       create: mp,
     });
+  }
+
+  // CarbFood catalog
+  const carbFoods = [
+    { name: 'Tortilla de maíz',  unitLabel: 'pza',     unitsPerPortion: 1   },
+    { name: 'Tostada sanísimo',  unitLabel: 'pza',     unitsPerPortion: 2   },
+    { name: 'Quinoa',            unitLabel: 'tza',     unitsPerPortion: 0.5 },
+    { name: 'Salmitas',          unitLabel: 'paquete', unitsPerPortion: 1   },
+    { name: 'Camote',            unitLabel: 'tza',     unitsPerPortion: 0.5 },
+    { name: 'Arroz',             unitLabel: 'tza',     unitsPerPortion: 0.5 },
+    { name: 'Pan integral',      unitLabel: 'reb',     unitsPerPortion: 1   },
+    { name: 'Avena',             unitLabel: 'tza',     unitsPerPortion: 0.5 },
+    { name: 'Pasta',             unitLabel: 'tza',     unitsPerPortion: 0.5 },
+    { name: 'Waffles de camote', unitLabel: 'pza',     unitsPerPortion: 2   },
+  ];
+
+  for (const personId of ['ruben', 'sarahi']) {
+    for (let i = 0; i < carbFoods.length; i++) {
+      const f = carbFoods[i];
+      const id = `cf-${personId}-${i + 1}`;
+      await prisma.carbFood.upsert({
+        where:  { id },
+        update: { ...f, personId, sortOrder: i },
+        create: { id, ...f, personId, sortOrder: i },
+      });
+    }
   }
 
   console.log('Seed complete ✓');

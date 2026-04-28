@@ -9,11 +9,12 @@ datasource db {
 }
 
 model Person {
-  id           String         @id
-  name         String
-  inBody       InBodyRecord[]
-  mealPlan     MealPlan?
+  id             String         @id
+  name           String
+  inBody         InBodyRecord[]
+  mealPlan       MealPlan?
   plannerEntries PlannerEntry[]
+  carbFoods      CarbFood[]
 }
 
 model InBodyRecord {
@@ -51,18 +52,46 @@ model MealPlan {
 }
 
 model PlannerEntry {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   weekStart   String
   personId    String
-  person      Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  person      Person        @relation(fields: [personId], references: [id], onDelete: Cascade)
   day         String
   slot        String
   proteinId   String?
-  protein     Protein? @relation(fields: [proteinId], references: [id], onDelete: SetNull)
+  protein     Protein?      @relation(fields: [proteinId], references: [id], onDelete: SetNull)
   cookedGrams Int?
+  carbs       PlannerCarb[]
 
   @@unique([weekStart, personId, day, slot])
   @@index([weekStart])
+}
+
+model CarbFood {
+  id              String        @id @default(cuid())
+  personId        String
+  person          Person        @relation(fields: [personId], references: [id], onDelete: Cascade)
+  name            String
+  unitLabel       String
+  unitsPerPortion Float
+  notes           String?
+  sortOrder       Int           @default(0)
+  createdAt       DateTime      @default(now())
+
+  plannerCarbs    PlannerCarb[]
+
+  @@index([personId])
+}
+
+model PlannerCarb {
+  id             String       @id @default(cuid())
+  plannerEntryId String
+  plannerEntry   PlannerEntry @relation(fields: [plannerEntryId], references: [id], onDelete: Cascade)
+  carbFoodId     String
+  carbFood       CarbFood     @relation(fields: [carbFoodId], references: [id], onDelete: Cascade)
+  portions       Float
+
+  @@index([plannerEntryId])
 }
 
 model ShoppingHave {
