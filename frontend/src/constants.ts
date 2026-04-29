@@ -5,7 +5,7 @@ export const MEAL_SLOTS: MealSlot[] = ['desayuno', 'snack1', 'almuerzo', 'snack2
 export const SLOT_LABELS: Record<MealSlot, string> = {
   desayuno:    'Desayuno',
   snack1:      'Snack Mañana',
-  almuerzo:    'Almuerzo',
+  almuerzo:    'Comida',
   snack2:      'Snack Tarde',
   cena:        'Cena',
   preEntreno:  'Pre-Entreno',

@@ -17,7 +17,7 @@ Tiki is a Spanish-language meal planning and nutrition tracking single-page appl
 |---|---|
 | `desayuno` | Desayuno |
 | `snack1` | Snack Mañana |
-| `almuerzo` | Almuerzo |
+| `almuerzo` | Comida |
 | `snack2` | Snack Tarde |
 | `cena` | Cena |
 | `preEntreno` | Pre-Entreno |

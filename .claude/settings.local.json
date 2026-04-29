@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(gh issue *)",
+      "PowerShell(gh issue *)",
+      "Bash(winget --version)"
     ]
   }
 }
