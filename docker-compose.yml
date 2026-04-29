@@ -1,5 +1,6 @@
 services:
   backend:
+    container_name: meal-planner-backend
     build:
       context: ./backend
     environment:
@@ -11,6 +12,7 @@ services:
       - pg_network
 
   frontend:
+    container_name: meal-planner-frontend
     build:
       context: ./frontend
     ports:
