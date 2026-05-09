@@ -3,6 +3,7 @@ import { C } from '../theme';
 import * as api from '../api';
 import type { Protein } from '../types';
 import type { PageProps } from '../App';
+import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 
 function ProteinModal({ protein, onSave, onClose }: { protein: Protein | null; onSave: () => void; onClose: () => void }) {
   const [form, setForm]   = useState<Omit<Protein, 'id'>>({
@@ -266,17 +267,12 @@ function ProteinCard({ protein, onEdit, onDelete }: { protein: Protein; onEdit: 
 }
 
 export default function ProteinsPage(_props: PageProps) {
-  const [proteins, setProteins] = useState<Protein[]>([]);
-  const [modal,    setModal]    = useState<Protein | null | 'new'>(null);
+  const [proteins,      setProteins]      = useState<Protein[]>([]);
+  const [modal,         setModal]         = useState<Protein | null | 'new'>(null);
+  const [deleteTarget,  setDeleteTarget]  = useState<Protein | null>(null);
 
   const reload = () => api.getProteins().then(setProteins).catch(() => {});
   useEffect(() => { reload(); }, []);
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('¿Eliminar esta proteína?')) return;
-    await api.deleteProtein(id);
-    reload();
-  };
 
   return (
     <div className="px-4 py-6 md:px-8 md:py-7 max-w-[900px]">
@@ -324,7 +320,7 @@ export default function ProteinsPage(_props: PageProps) {
               key={p.id}
               protein={p}
               onEdit={() => setModal(p)}
-              onDelete={() => handleDelete(p.id)}
+              onDelete={() => setDeleteTarget(p)}
             />
           ))}
         </div>
@@ -335,6 +331,15 @@ export default function ProteinsPage(_props: PageProps) {
           protein={modal === 'new' ? null : modal}
           onSave={() => { reload(); setModal(null); }}
           onClose={() => setModal(null)}
+        />
+      )}
+
+      {deleteTarget !== null && (
+        <ConfirmDeleteModal
+          title="Eliminar proteína"
+          message={`¿Seguro que quieres eliminar "${deleteTarget.name}"? Esta acción no se puede deshacer.`}
+          onConfirm={async () => { await api.deleteProtein(deleteTarget.id); reload(); setDeleteTarget(null); }}
+          onClose={() => setDeleteTarget(null)}
         />
       )}
     </div>

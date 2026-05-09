@@ -4,6 +4,7 @@ import * as api from '../api';
 import { formatPortionUnits } from '../constants';
 import type { CarbFood } from '../types';
 import type { PageProps } from '../App';
+import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 
 /* ─── Form state shape (matches Omit<CarbFood, 'id'> minus personId) ─── */
 interface CarbFoodForm {
@@ -252,18 +253,13 @@ function CarbFoodCard({
 
 /* ─── Page ─── */
 export default function CarbsPage({ person }: PageProps) {
-  const [foods, setFoods] = useState<CarbFood[]>([]);
-  const [modal, setModal] = useState<CarbFood | null | 'new'>(null);
+  const [foods,        setFoods]        = useState<CarbFood[]>([]);
+  const [modal,        setModal]        = useState<CarbFood | null | 'new'>(null);
+  const [deleteTarget, setDeleteTarget] = useState<CarbFood | null>(null);
 
   const reload = () => api.getCarbFoods(person).then(setFoods).catch(() => {});
 
   useEffect(() => { reload(); }, [person]);
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('¿Borrar este carbohidrato? Se eliminará de cualquier comida planificada.')) return;
-    await api.deleteCarbFood(id);
-    reload();
-  };
 
   return (
     <div className="px-4 py-6 md:px-8 md:py-7 max-w-[900px]">
@@ -364,7 +360,7 @@ export default function CarbsPage({ person }: PageProps) {
                     Editar
                   </button>
                   <button
-                    onClick={() => handleDelete(food.id)}
+                    onClick={() => setDeleteTarget(food)}
                     className="px-3 py-1.5 rounded-lg text-[12px] cursor-pointer min-h-[36px]"
                     style={{ border: `1px solid ${C.red}33`, background: 'none', color: C.red }}
                   >
@@ -382,7 +378,7 @@ export default function CarbsPage({ person }: PageProps) {
                 key={food.id}
                 food={food}
                 onEdit={() => setModal(food)}
-                onDelete={() => handleDelete(food.id)}
+                onDelete={() => setDeleteTarget(food)}
               />
             ))}
           </div>
@@ -413,6 +409,15 @@ export default function CarbsPage({ person }: PageProps) {
           personId={person}
           onSave={() => { reload(); setModal(null); }}
           onClose={() => setModal(null)}
+        />
+      )}
+
+      {deleteTarget !== null && (
+        <ConfirmDeleteModal
+          title="Eliminar carbohidrato"
+          message={`¿Seguro que quieres eliminar "${deleteTarget.name}"? Se eliminará de cualquier comida planificada.`}
+          onConfirm={async () => { await api.deleteCarbFood(deleteTarget.id); reload(); setDeleteTarget(null); }}
+          onClose={() => setDeleteTarget(null)}
         />
       )}
     </div>

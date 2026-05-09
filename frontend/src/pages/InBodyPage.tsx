@@ -4,6 +4,7 @@ import { C } from '../theme';
 import * as api from '../api';
 import type { InBodyRecord } from '../types';
 import type { PageProps } from '../App';
+import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 
 Chart.register(...registerables);
 
@@ -185,10 +186,11 @@ function InBodyModal({
 }
 
 export default function InBodyPage({ person }: PageProps) {
-  const [records,     setRecords]     = useState<InBodyRecord[]>([]);
-  const [modal,       setModal]       = useState<Partial<InBodyRecord> | null | 'new'>(null);
-  const [activeChart, setActiveChart] = useState<string>('weight');
-  const [personName,  setPersonName]  = useState(person === 'ruben' ? 'Ruben' : 'Sarahi');
+  const [records,       setRecords]       = useState<InBodyRecord[]>([]);
+  const [modal,         setModal]         = useState<Partial<InBodyRecord> | null | 'new'>(null);
+  const [deleteTarget,  setDeleteTarget]  = useState<InBodyRecord | null>(null);
+  const [activeChart,   setActiveChart]   = useState<string>('weight');
+  const [personName,    setPersonName]    = useState(person === 'ruben' ? 'Ruben' : 'Sarahi');
 
   const reload = () => api.getInBody(person).then(setRecords).catch(() => {});
 
@@ -368,7 +370,7 @@ export default function InBodyPage({ person }: PageProps) {
                         Editar
                       </button>
                       <button
-                        onClick={async () => { if (confirm('¿Eliminar registro?')) { await api.deleteInBody(rec.id); reload(); } }}
+                        onClick={() => setDeleteTarget(rec)}
                         className="px-2.5 py-1.5 rounded-[7px] text-[12px] cursor-pointer min-h-[36px]"
                         style={{ border: `1px solid ${C.red}22`, background: 'none', color: C.red }}
                       >
@@ -389,6 +391,15 @@ export default function InBodyPage({ person }: PageProps) {
           personId={person}
           onSave={() => { reload(); setModal(null); }}
           onClose={() => setModal(null)}
+        />
+      )}
+
+      {deleteTarget !== null && (
+        <ConfirmDeleteModal
+          title="Eliminar registro"
+          message="Esta acción no se puede deshacer."
+          onConfirm={async () => { await api.deleteInBody(deleteTarget.id); reload(); setDeleteTarget(null); }}
+          onClose={() => setDeleteTarget(null)}
         />
       )}
     </div>
