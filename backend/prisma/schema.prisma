@@ -22,9 +22,10 @@ model InBodyRecord {
   personId            String
   person              Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
   date                String
-  weight              Float?
-  skeletalMuscleMass  Float?
-  bodyFatMass         Float?
+  weight                Float?
+  skeletalMuscleMass    Float?
+  skeletalMusclePercent Float?
+  bodyFatMass           Float?
   bodyFatPercent      Float?
   bmi                 Float?
   visceralFatLevel    Int?

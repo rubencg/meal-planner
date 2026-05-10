@@ -11,8 +11,9 @@ export interface InBodyRecord {
   personId:            string;
   date:                string;
   weight?:             number;
-  skeletalMuscleMass?: number;
-  bodyFatMass?:        number;
+  skeletalMuscleMass?:    number;
+  skeletalMusclePercent?: number;
+  bodyFatMass?:           number;
   bodyFatPercent?:     number;
   bmi?:                number;
   visceralFatLevel?:   number;

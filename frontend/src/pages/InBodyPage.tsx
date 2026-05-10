@@ -9,22 +9,24 @@ import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 Chart.register(...registerables);
 
 const INBODY_FIELDS = [
-  { key: 'weight',              label: 'Peso',            unit: 'kg',   step: 0.1  },
-  { key: 'skeletalMuscleMass',  label: 'Masa Muscular',   unit: 'kg',   step: 0.1  },
-  { key: 'bodyFatMass',         label: 'Masa Grasa',      unit: 'kg',   step: 0.1  },
-  { key: 'bodyFatPercent',      label: '% Grasa',         unit: '%',    step: 0.1  },
-  { key: 'bmi',                 label: 'IMC',             unit: '',     step: 0.1  },
-  { key: 'visceralFatLevel',    label: 'Grasa Visceral',  unit: 'lvl',  step: 1    },
-  { key: 'bmr',                 label: 'TMB',             unit: 'kcal', step: 1    },
-  { key: 'recommendedCalories', label: 'Calorías Rec.',   unit: 'kcal', step: 1    },
-  { key: 'waistHipRatio',       label: 'Cintura-Cadera',  unit: '',     step: 0.01 },
+  { key: 'weight',                label: 'Peso',            unit: 'kg',   step: 0.1  },
+  { key: 'skeletalMuscleMass',    label: 'Masa Muscular',   unit: 'kg',   step: 0.1  },
+  { key: 'skeletalMusclePercent', label: '% Muscular',      unit: '%',    step: 0.1  },
+  { key: 'bodyFatMass',           label: 'Grasa',           unit: 'kg',   step: 0.1  },
+  { key: 'bodyFatPercent',        label: '% Grasa',         unit: '%',    step: 0.1  },
+  { key: 'bmi',                   label: 'IMC',             unit: '',     step: 0.1  },
+  { key: 'visceralFatLevel',      label: 'Grasa Visceral',  unit: 'lvl',  step: 1    },
+  { key: 'bmr',                   label: 'TMB',             unit: 'kcal', step: 1    },
+  { key: 'recommendedCalories',   label: 'Calorías Rec.',   unit: 'kcal', step: 1    },
+  { key: 'waistHipRatio',         label: 'Cintura-Cadera',  unit: '',     step: 0.01 },
 ] as const;
 
 const CHARTS = [
-  { key: 'weight',             label: 'Peso',          color: '#22c97a', unit: 'kg'   },
-  { key: 'skeletalMuscleMass', label: 'Masa Muscular', color: '#60a5fa', unit: 'kg'   },
-  { key: 'bodyFatPercent',     label: '% Grasa',       color: '#f87171', unit: '%'    },
-  { key: 'bmr',                label: 'TMB',           color: '#fbbf24', unit: 'kcal' },
+  { key: 'weight',                label: 'Peso',          color: '#22c97a', unit: 'kg' },
+  { key: 'skeletalMuscleMass',    label: 'Masa Muscular', color: '#60a5fa', unit: 'kg' },
+  { key: 'skeletalMusclePercent', label: '% Muscular',    color: '#a78bfa', unit: '%'  },
+  { key: 'bodyFatMass',           label: 'Grasa (kg)',    color: '#fb923c', unit: 'kg' },
+  { key: 'bodyFatPercent',        label: '% Grasa',       color: '#f87171', unit: '%'  },
 ] as const;
 
 function LineChart({ records, field, color, unit }: { records: InBodyRecord[]; field: string; color: string; unit: string }) {
@@ -237,12 +239,12 @@ export default function InBodyPage({ person }: PageProps) {
       {latest && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-6">
           {([
-            { key: 'weight',              label: 'Peso',         unit: 'kg',   lb: true  },
-            { key: 'skeletalMuscleMass',  label: 'Músculo',      unit: 'kg',   lb: false },
-            { key: 'bodyFatPercent',      label: '% Grasa',      unit: '%',    lb: true  },
-            { key: 'visceralFatLevel',    label: 'Gr. Visceral', unit: 'lvl',  lb: true  },
-            { key: 'bmr',                label: 'TMB',           unit: 'kcal', lb: false },
-            { key: 'recommendedCalories', label: 'Cal. Rec.',    unit: 'kcal', lb: false },
+            { key: 'weight',                label: 'Peso',         unit: 'kg',  lb: true  },
+            { key: 'skeletalMuscleMass',    label: 'Músculo',      unit: 'kg',  lb: false },
+            { key: 'skeletalMusclePercent', label: '% Muscular',   unit: '%',   lb: false },
+            { key: 'bodyFatMass',           label: 'Grasa',        unit: 'kg',  lb: true  },
+            { key: 'bodyFatPercent',        label: '% Grasa',      unit: '%',   lb: true  },
+            { key: 'visceralFatLevel',      label: 'Gr. Visceral', unit: 'lvl', lb: true  },
           ] as { key: FieldKey; label: string; unit: string; lb: boolean }[]).map(f => {
             const d = delta(f.key);
             const better = d != null ? (f.lb ? d < 0 : d > 0) : false;
@@ -316,19 +318,23 @@ export default function InBodyPage({ person }: PageProps) {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-[13px]" style={{ borderCollapse: 'collapse', minWidth: 560 }}>
+            <table className="w-full text-[13px]" style={{ borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: C.surface3 }}>
-                  <th
-                    className="px-4 py-2.5 text-left whitespace-nowrap font-medium"
-                    style={{ color: C.muted }}
-                  >
+                  <th className="px-4 py-2.5 text-left whitespace-nowrap font-medium" style={{ color: C.muted }}>
                     Fecha
                   </th>
-                  {INBODY_FIELDS.slice(0, 6).map(f => (
+                  {([
+                    { key: 'weight',                label: 'Peso',          desktop: false },
+                    { key: 'skeletalMuscleMass',    label: 'Masa Muscular', desktop: true  },
+                    { key: 'skeletalMusclePercent', label: '% Muscular',    desktop: false },
+                    { key: 'bodyFatMass',           label: 'Grasa',         desktop: true  },
+                    { key: 'bodyFatPercent',        label: '% Grasa',       desktop: false },
+                    { key: 'bmi',                   label: 'IMC',           desktop: true  },
+                  ] as { key: FieldKey; label: string; desktop: boolean }[]).map(f => (
                     <th
                       key={f.key}
-                      className="px-3 py-2.5 text-right whitespace-nowrap font-medium"
+                      className={`px-3 py-2.5 text-right whitespace-nowrap font-medium${f.desktop ? ' hidden md:table-cell' : ''}`}
                       style={{ color: C.muted }}
                     >
                       {f.label}
@@ -346,36 +352,70 @@ export default function InBodyPage({ person }: PageProps) {
                       background: i % 2 === 0 ? 'transparent' : C.surface3 + '40',
                     }}
                   >
-                    <td
-                      className="px-4 py-3 whitespace-nowrap"
-                      style={{ color: C.text, fontFamily: "'DM Mono', monospace" }}
-                    >
+                    <td className="px-4 py-3 whitespace-nowrap" style={{ color: C.text, fontFamily: "'DM Mono', monospace" }}>
                       {rec.date}
                     </td>
-                    {INBODY_FIELDS.slice(0, 6).map(f => (
+                    {([
+                      { key: 'weight',                desktop: false },
+                      { key: 'skeletalMuscleMass',    desktop: true  },
+                      { key: 'skeletalMusclePercent', desktop: false },
+                      { key: 'bodyFatMass',           desktop: true  },
+                      { key: 'bodyFatPercent',        desktop: false },
+                      { key: 'bmi',                   desktop: true  },
+                    ] as { key: FieldKey; desktop: boolean }[]).map(f => (
                       <td
                         key={f.key}
-                        className="px-3 py-3 text-right"
+                        className={`px-3 py-3 text-right${f.desktop ? ' hidden md:table-cell' : ''}`}
                         style={{ color: C.text, fontFamily: "'DM Mono', monospace" }}
                       >
                         {(rec[f.key as FieldKey] as number | undefined) ?? '—'}
                       </td>
                     ))}
                     <td className="px-3 py-3 whitespace-nowrap">
-                      <button
-                        onClick={() => setModal(rec)}
-                        className="mr-1.5 px-2.5 py-1.5 rounded-[7px] text-[12px] cursor-pointer min-h-[36px]"
-                        style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => setDeleteTarget(rec)}
-                        className="px-2.5 py-1.5 rounded-[7px] text-[12px] cursor-pointer min-h-[36px]"
-                        style={{ border: `1px solid ${C.red}22`, background: 'none', color: C.red }}
-                      >
-                        Eliminar
-                      </button>
+                      {/* Mobile: icon-only buttons */}
+                      <div className="flex md:hidden gap-1.5 justify-end">
+                        <button
+                          onClick={() => setModal(rec)}
+                          className="p-2 rounded-[7px] cursor-pointer"
+                          style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}
+                          title="Editar"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget(rec)}
+                          className="p-2 rounded-[7px] cursor-pointer"
+                          style={{ border: `1px solid ${C.red}33`, background: 'none', color: C.red }}
+                          title="Eliminar"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                            <path d="M10 11v6M14 11v6"/>
+                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                          </svg>
+                        </button>
+                      </div>
+                      {/* Desktop: text buttons */}
+                      <div className="hidden md:flex gap-1.5">
+                        <button
+                          onClick={() => setModal(rec)}
+                          className="px-2.5 py-1.5 rounded-[7px] text-[12px] cursor-pointer min-h-[36px]"
+                          style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget(rec)}
+                          className="px-2.5 py-1.5 rounded-[7px] text-[12px] cursor-pointer min-h-[36px]"
+                          style={{ border: `1px solid ${C.red}22`, background: 'none', color: C.red }}
+                        >
+                          Eliminar
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
