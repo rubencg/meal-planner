@@ -402,6 +402,7 @@ export default function MealPlanPage({ person }: PageProps) {
                       <span className="text-[14px] font-medium" style={{ color: C.text }}>{SLOT_LABELS[slot]}</span>
                     </div>
                     <textarea
+                      key={`${activeCarga.id}-${slot}`}
                       defaultValue={s.text ?? ''}
                       onBlur={e => saveFreeSlot(slot, e.target.value)}
                       placeholder="Ej: ½ tza de fruta + ½ medida de proteína…"
