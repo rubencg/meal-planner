@@ -1,4 +1,4 @@
-import type { Person, InBodyRecord, Protein, MealPlan, PlannerEntry, WeekDay, MealSlot, CarbFood } from './types';
+import type { Person, InBodyRecord, Protein, Carga, PlannerEntry, PlannerDayCarga, WeekDay, MealSlot, CarbFood } from './types';
 
 const BASE = '/api';
 
@@ -28,9 +28,23 @@ export const createProtein = (data: Omit<Protein, 'id'>) => req<Protein>('/prote
 export const updateProtein = (id: string, data: Omit<Protein, 'id'>) => req<Protein>(`/proteins/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 export const deleteProtein = (id: string) => req<void>(`/proteins/${id}`, { method: 'DELETE' });
 
-// Meal Plans
-export const getMealPlan  = (personId: string)       => req<MealPlan>(`/meal-plans/${personId}`);
-export const saveMealPlan = (personId: string, slots: MealPlan['slots']) => req<MealPlan>(`/meal-plans/${personId}`, { method: 'PUT', body: JSON.stringify({ slots }) });
+// Cargas
+export const getCargas    = (personId: string) => req<Carga[]>(`/cargas?personId=${personId}`);
+export const createCarga  = (data: { personId: string; name: string }) =>
+  req<Carga>('/cargas', { method: 'POST', body: JSON.stringify(data) });
+export const updateCarga  = (id: string, data: Partial<Pick<Carga, 'name' | 'slots' | 'sortOrder'>>) =>
+  req<Carga>(`/cargas/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+export const setDefaultCarga = (id: string) =>
+  req<Carga>(`/cargas/${id}/default`, { method: 'PUT' });
+export const deleteCarga  = (id: string) => req<void>(`/cargas/${id}`, { method: 'DELETE' });
+
+// Carga por día
+export const getDayCargas = (weekStart: string) =>
+  req<PlannerDayCarga[]>(`/planner/day-cargas?weekStart=${weekStart}`);
+export const setDayCarga  = (data: { weekStart: string; personId: string; day: WeekDay; cargaId: string }) =>
+  req<PlannerDayCarga>('/planner/day-carga', { method: 'POST', body: JSON.stringify(data) });
+export const clearDayCarga = (weekStart: string, personId: string, day: WeekDay) =>
+  req<void>(`/planner/day-carga?weekStart=${weekStart}&personId=${personId}&day=${day}`, { method: 'DELETE' });
 
 // Planner
 export const getWeek     = (weekStart: string) => req<PlannerEntry[]>(`/planner?weekStart=${weekStart}`);

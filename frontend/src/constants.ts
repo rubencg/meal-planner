@@ -1,35 +1,36 @@
-import type { MealSlot, WeekDay, CarbFood } from './types';
+import type { MealSlot, WeekDay, CarbFood, SlotType } from './types';
 
-export const MEAL_SLOTS: MealSlot[] = ['desayuno', 'snack1', 'almuerzo', 'snack2', 'cena', 'preEntreno', 'postEntreno'];
+export const MEAL_SLOTS: MealSlot[] = ['entrenamiento', 'desayuno', 'snack1', 'almuerzo', 'snack2', 'cena'];
+
+export const STRUCTURED_SLOTS: MealSlot[] = ['desayuno', 'almuerzo', 'cena'];
+export const FREE_SLOTS:       MealSlot[] = ['entrenamiento', 'snack1', 'snack2'];
+export const slotType = (s: MealSlot): SlotType => STRUCTURED_SLOTS.includes(s) ? 'structured' : 'free';
 
 export const SLOT_LABELS: Record<MealSlot, string> = {
-  desayuno:    'Desayuno',
-  snack1:      'Snack Mañana',
-  almuerzo:    'Comida',
-  snack2:      'Snack Tarde',
-  cena:        'Cena',
-  preEntreno:  'Pre-Entreno',
-  postEntreno: 'Post-Entreno',
+  entrenamiento: 'Entrenamiento',
+  desayuno:      'Desayuno',
+  snack1:        'Colación 12:30',
+  almuerzo:      'Comida',
+  snack2:        'Colación 6:30',
+  cena:          'Cena',
 };
 
 export const SLOT_ICONS: Record<MealSlot, string> = {
-  desayuno:    '🍳',
-  snack1:      '🍎',
-  almuerzo:    '🥗',
-  snack2:      '🥜',
-  cena:        '🍽️',
-  preEntreno:  '⚡',
-  postEntreno: '🥤',
+  entrenamiento: '🏋️',
+  desayuno:      '🍳',
+  snack1:        '🍎',
+  almuerzo:      '🥗',
+  snack2:        '🥜',
+  cena:          '🍽️',
 };
 
 export const SLOT_ACCENT: Record<MealSlot, string> = {
-  desayuno:    '#22c97a',
-  snack1:      '#a78bfa',
-  almuerzo:    '#60a5fa',
-  snack2:      '#fb923c',
-  cena:        '#f87171',
-  preEntreno:  '#fbbf24',
-  postEntreno: '#34d399',
+  entrenamiento: '#fbbf24',
+  desayuno:      '#22c97a',
+  snack1:        '#a78bfa',
+  almuerzo:      '#60a5fa',
+  snack2:        '#fb923c',
+  cena:          '#f87171',
 };
 
 export const DAYS: WeekDay[] = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];

@@ -37,39 +37,55 @@ async function main() {
     await prisma.inBodyRecord.upsert({ where: { id: r.id }, update: r, create: r });
   }
 
-  // Meal plans — carbs are now PORTIONS (was: grams)
-  const mealPlans = [
-    {
-      personId: 'ruben',
-      slots: {
-        desayuno:    { protein: 50, carbs: 2,   fruit: 0,   notes: '' },
-        snack1:      { protein: 30, carbs: 1,   fruit: 0.5, notes: '½ taza de berries' },
-        almuerzo:    { protein: 60, carbs: 2.5, fruit: 0,   notes: '' },
-        snack2:      { protein: 30, carbs: 1,   fruit: 0.5, notes: '½ taza de fruta' },
-        cena:        { protein: 55, carbs: 1.5, fruit: 0,   notes: '' },
-        preEntreno:  { protein: 25, carbs: 1.5, fruit: 0,   notes: '30 min antes' },
-        postEntreno: { protein: 40, carbs: 1,   fruit: 0,   notes: 'Inmediatamente después' },
+  // Cargas — planes completos por intensidad de entrenamiento, con todos sus slots
+  const cargasByPerson: Record<string, Array<{ id: string; name: string; isDefault: boolean; sortOrder: number; slots: any }>> = {
+    ruben: [
+      {
+        id: 'carga-ruben-baja', name: 'Carga baja', isDefault: true, sortOrder: 0,
+        slots: {
+          entrenamiento: { text: 'Antes: 1 rice cake con 1 cdita de cacahuate. Durante: suero. Terminando: 1 medida de proteína y ½ tza de fresas.' },
+          desayuno: { protein: 90, carbs: 1, notes: '' },
+          snack1:   { text: '½ tza de fruta y ½ medida de proteína' },
+          almuerzo: { protein: 90, carbs: 2, notes: '' },
+          snack2:   { text: '½ tza de fruta y ½ medida de proteína' },
+          cena:     { protein: 90, carbs: 2, notes: '' },
+        },
       },
-    },
-    {
-      personId: 'sarahi',
-      slots: {
-        desayuno:    { protein: 35, carbs: 1.5, fruit: 0,   notes: '' },
-        snack1:      { protein: 20, carbs: 0.5, fruit: 0.5, notes: '½ taza de berries' },
-        almuerzo:    { protein: 40, carbs: 1.5, fruit: 0,   notes: '' },
-        snack2:      { protein: 20, carbs: 0.5, fruit: 0.5, notes: '½ taza de fruta' },
-        cena:        { protein: 38, carbs: 1,   fruit: 0,   notes: '' },
-        preEntreno:  { protein: 18, carbs: 1,   fruit: 0,   notes: '' },
-        postEntreno: { protein: 28, carbs: 0.5, fruit: 0,   notes: '' },
+      {
+        id: 'carga-ruben-alta', name: 'Carga alta', isDefault: false, sortOrder: 1,
+        slots: {
+          entrenamiento: { text: 'Antes: 3 rice cake con 1 cdita de cacahuate. Durante: suero. Terminando: 1 medida de proteína y ½ tza de fresas + 2 cdas de avena.' },
+          desayuno: { protein: 120, carbs: 1, notes: '' },
+          snack1:   { text: '½ tza de fruta' },
+          almuerzo: { protein: 160, carbs: 2, notes: '' },
+          snack2:   { text: '½ tza de fruta y ½ tza de yogurt griego o ½ medida de proteína' },
+          cena:     { protein: 160, carbs: 2, notes: '' },
+        },
       },
-    },
-  ];
-  for (const mp of mealPlans) {
-    await prisma.mealPlan.upsert({
-      where:  { personId: mp.personId },
-      update: { slots: mp.slots },
-      create: mp,
-    });
+    ],
+    sarahi: [
+      {
+        id: 'carga-sarahi-base', name: 'Carga base', isDefault: true, sortOrder: 0,
+        slots: {
+          entrenamiento: { text: 'Antes: ½ medida de proteína y ½ tza de fruta. Durante: suero. Terminando: ½ medida de proteína.' },
+          desayuno: { protein: 160, carbs: 2, notes: '' },
+          snack1:   { text: '½ tza de fruta y ½ medida de proteína' },
+          almuerzo: { protein: 200, carbs: 2, notes: '' },
+          snack2:   { text: '1 tza de fruta y ½ medida de proteína' },
+          cena:     { protein: 200, carbs: 2, notes: '' },
+        },
+      },
+    ],
+  };
+
+  for (const [personId, list] of Object.entries(cargasByPerson)) {
+    for (const c of list) {
+      await prisma.carga.upsert({
+        where:  { id: c.id },
+        update: { name: c.name, isDefault: c.isDefault, sortOrder: c.sortOrder, slots: c.slots, personId },
+        create: { id: c.id, personId, name: c.name, isDefault: c.isDefault, sortOrder: c.sortOrder, slots: c.slots },
+      });
+    }
   }
 
   // CarbFood catalog

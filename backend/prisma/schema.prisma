@@ -12,7 +12,7 @@ model Person {
   id             String         @id
   name           String
   inBody         InBodyRecord[]
-  mealPlan       MealPlan?
+  cargas         Carga[]
   plannerEntries PlannerEntry[]
   carbFoods      CarbFood[]
 }
@@ -45,11 +45,31 @@ model Protein {
   plannerEntries PlannerEntry[]
 }
 
-model MealPlan {
-  id       String @id @default(cuid())
-  personId String @unique
-  person   Person @relation(fields: [personId], references: [id], onDelete: Cascade)
-  slots    Json
+model Carga {
+  id        String   @id @default(cuid())
+  personId  String
+  person    Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  name      String
+  sortOrder Int      @default(0)
+  isDefault Boolean  @default(false)
+  slots     Json
+  createdAt DateTime @default(now())
+
+  dayAssignments PlannerDayCarga[]
+
+  @@index([personId])
+}
+
+model PlannerDayCarga {
+  id        String @id @default(cuid())
+  weekStart String
+  personId  String
+  day       String
+  cargaId   String
+  carga     Carga  @relation(fields: [cargaId], references: [id], onDelete: Cascade)
+
+  @@unique([weekStart, personId, day])
+  @@index([weekStart])
 }
 
 model PlannerEntry {

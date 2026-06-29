@@ -18,6 +18,41 @@ router.get('/', async (req, res) => {
   res.json(entries);
 });
 
+router.get('/day-cargas', async (req, res) => {
+  const { weekStart } = req.query;
+  if (!weekStart) { res.status(400).json({ error: 'weekStart required' }); return; }
+  const dayCargas = await prisma.plannerDayCarga.findMany({
+    where: { weekStart: String(weekStart) },
+  });
+  res.json(dayCargas);
+});
+
+router.post('/day-carga', async (req, res) => {
+  const { weekStart, personId, day, cargaId } = req.body;
+  if (!weekStart || !personId || !day || !cargaId) {
+    res.status(400).json({ error: 'weekStart, personId, day, cargaId required' });
+    return;
+  }
+  const dayCarga = await prisma.plannerDayCarga.upsert({
+    where:  { weekStart_personId_day: { weekStart, personId, day } },
+    update: { cargaId },
+    create: { weekStart, personId, day, cargaId },
+  });
+  res.json(dayCarga);
+});
+
+router.delete('/day-carga', async (req, res) => {
+  const { weekStart, personId, day } = req.query;
+  if (!weekStart || !personId || !day) {
+    res.status(400).json({ error: 'weekStart, personId, day required' });
+    return;
+  }
+  await prisma.plannerDayCarga.deleteMany({
+    where: { weekStart: String(weekStart), personId: String(personId), day: String(day) },
+  });
+  res.status(204).send();
+});
+
 router.post('/', async (req, res) => {
   const { weekStart, personId, day, slot, proteinId, cookedGrams, carbs } = req.body;
   if (!weekStart || !personId || !day || !slot) {

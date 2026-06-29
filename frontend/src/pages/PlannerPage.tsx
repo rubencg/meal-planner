@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { C } from '../theme';
 import * as api from '../api';
 import {
-  MEAL_SLOTS, SLOT_LABELS, SLOT_ICONS, SLOT_ACCENT,
+  MEAL_SLOTS, SLOT_LABELS, SLOT_ICONS, SLOT_ACCENT, STRUCTURED_SLOTS, slotType,
   DAYS, DAY_FULL, DAY_LABELS, getWeekStart, formatWeekLabel, rawWeight, todayKey,
   formatPortionUnits,
 } from '../constants';
-import type { Protein, MealPlan, PlannerEntry, MealSlot, WeekDay, SlotData, CarbFood, CarbSelection } from '../types';
+import type { Protein, Carga, PlannerEntry, PlannerDayCarga, MealSlot, WeekDay, StructuredSlotData, CarbFood, CarbSelection } from '../types';
 import type { PageProps } from '../App';
 
 /* ─────────────────────────── EntryPicker modal ─────────────────────────── */
@@ -17,7 +17,7 @@ function EntryPicker({
   slot:       MealSlot;
   day:        WeekDay;
   current:    PlannerEntry | undefined;
-  planSlot:   Partial<SlotData>;
+  planSlot:   Partial<StructuredSlotData>;
   carbFoods:  CarbFood[];
   onSelect:   (proteinId: string | null, cookedGrams: number, carbs: CarbSelection[]) => void;
   onClear:    () => void;
@@ -27,7 +27,6 @@ function EntryPicker({
   const [selected,  setSelected]  = useState<string | null>(current?.proteinId ?? null);
   const [cookedG,   setCookedG]   = useState(current?.cookedGrams ?? planSlot.protein ?? 0);
 
-  // Seed carb editor: entry's carbs if any, else meal plan defaults, else empty
   const defaultCarbs: CarbSelection[] = (() => {
     if (current?.carbs && current.carbs.length > 0) {
       return current.carbs.map(pc => ({ carbFoodId: pc.carbFoodId, portions: pc.portions }));
@@ -79,7 +78,6 @@ function EntryPicker({
         style={{ background: C.surface, border: `1px solid ${C.border2}` }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Mobile drag handle */}
         <div className="flex justify-center pt-3 pb-1 md:hidden shrink-0">
           <div className="w-10 h-1 rounded-full" style={{ background: C.border2 }} />
         </div>
@@ -97,9 +95,7 @@ function EntryPicker({
           </div>
         </div>
 
-        {/* Scrollable body */}
         <div className="overflow-y-auto flex-1 px-6 py-2 flex flex-col gap-4">
-          {/* ── Proteína section ── */}
           <div>
             <div className="text-[11px] uppercase tracking-wider mb-2" style={{ color: C.muted }}>Proteína</div>
             <div className="flex flex-col gap-1.5">
@@ -136,7 +132,6 @@ function EntryPicker({
               })}
             </div>
 
-            {/* Gram input */}
             {selected && (
               <div
                 className="mt-2 rounded-[10px] p-3.5"
@@ -182,7 +177,6 @@ function EntryPicker({
             )}
           </div>
 
-          {/* ── Carbohidratos section ── */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <div className="text-[11px] uppercase tracking-wider" style={{ color: '#60a5fa' }}>Carbohidratos</div>
@@ -260,7 +254,6 @@ function EntryPicker({
           </div>
         </div>
 
-        {/* Action buttons */}
         <div className="flex gap-2 px-6 pb-6 pt-3 shrink-0">
           {(hasProtein || hasCarbs) && (
             <button
@@ -325,15 +318,54 @@ function PlannerCarbChips({ entry, carbFoods }: { entry: PlannerEntry; carbFoods
   );
 }
 
+/* ─── Read-only free-slot text card ─── */
+function FreeSlotCard({ text }: { text?: string }) {
+  return (
+    <div
+      style={{
+        minHeight: 36, borderRadius: '0 7px 7px 0', padding: '6px 7px',
+        border: `1px dashed ${C.border}`, background: 'transparent',
+      }}
+    >
+      <span style={{ fontSize: 11, color: text ? C.muted : C.dim, lineHeight: 1.4 }}>
+        {text || '—'}
+      </span>
+    </div>
+  );
+}
+
 /* ──────────────────────────── TodosCell (desktop table) ───────────────────── */
 
 function TodosCell({
-  day, slot, allEntries, persons, slotPlan, accent, isToday, carbFoodsMap,
+  day, slot, allEntries, persons, slotTarget, freeTexts, accent, isToday, carbFoodsMap,
 }: {
   day: WeekDay; slot: MealSlot; allEntries: PlannerEntry[];
-  persons: { id: string; name: string }[]; slotPlan: Partial<SlotData>; accent: string; isToday: boolean;
+  persons: { id: string; name: string }[]; slotTarget: Partial<StructuredSlotData>; accent: string; isToday: boolean;
+  freeTexts: { personId: string; text: string }[];
   carbFoodsMap: Record<string, CarbFood[]>;
 }) {
+  if (slotType(slot) === 'free') {
+    return (
+      <td style={{ padding: '4px', verticalAlign: 'top', borderTop: `1px solid ${C.border}`, background: isToday ? C.accentGlow : 'transparent' }}>
+        {freeTexts.length === 0 ? (
+          <FreeSlotCard />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {freeTexts.map(ft => {
+              const pName = persons.find(p => p.id === ft.personId)?.name ?? ft.personId;
+              return (
+                <div key={ft.personId} style={{ borderLeft: `3px solid ${accent}`, borderRadius: '0 7px 7px 0', padding: '5px 7px', background: C.surface2, border: `1px solid ${accent}30`, borderLeftWidth: 3 }}>
+                  <div style={{ fontSize: 9, color: C.dim, marginBottom: 2 }}>{pName}</div>
+                  <div style={{ fontSize: 11, color: C.muted, lineHeight: 1.4 }}>{ft.text || '—'}</div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </td>
+    );
+  }
+
   const cellEntries = allEntries.filter(e => e.day === day && e.slot === slot);
   const proteinEntries = cellEntries.filter(e => e.proteinId);
 
@@ -348,7 +380,6 @@ function TodosCell({
   });
   const groups = Object.values(grouped);
 
-  // Aggregate carbs across all persons for this cell
   type CarbGroup = { food: CarbFood; totalPortions: number; pList: { personId: string; portions: number }[] };
   const carbGrouped: Record<string, CarbGroup> = {};
   cellEntries.forEach(e => {
@@ -375,9 +406,8 @@ function TodosCell({
       }}
     >
       <div style={{ marginBottom: 3, padding: '4px 6px', borderRadius: '6px 6px 0 0', background: C.surface3 + '80', display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-        {(slotPlan.protein ?? 0) > 0 && <span style={{ fontSize: 9, color: '#22c97a', fontFamily: "'DM Mono', monospace" }}>{slotPlan.protein}g P</span>}
-        {(slotPlan.carbs   ?? 0) > 0 && <span style={{ fontSize: 9, color: '#60a5fa', fontFamily: "'DM Mono', monospace" }}>{slotPlan.carbs}porc C</span>}
-        {(slotPlan.fruit   ?? 0) > 0 && <span style={{ fontSize: 9, color: '#fb923c', fontFamily: "'DM Mono', monospace" }}>{slotPlan.fruit}tz🍊</span>}
+        {(slotTarget.protein ?? 0) > 0 && <span style={{ fontSize: 9, color: '#22c97a', fontFamily: "'DM Mono', monospace" }}>{slotTarget.protein}g P</span>}
+        {(slotTarget.carbs   ?? 0) > 0 && <span style={{ fontSize: 9, color: '#60a5fa', fontFamily: "'DM Mono', monospace" }}>{slotTarget.carbs}porc C</span>}
       </div>
       {isEmpty ? (
         <div style={{ minHeight: 36, border: `1px dashed ${C.border}`, borderRadius: '0 7px 7px 0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -436,26 +466,52 @@ function TodosCell({
   );
 }
 
+/* ─── Day carga picker (shared) ─── */
+function DayCargaPicker({
+  cargas, value, onChange,
+}: {
+  cargas: Carga[]; value: string | undefined; onChange: (cargaId: string | null) => void;
+}) {
+  if (cargas.length === 0) return null;
+  return (
+    <select
+      value={value ?? ''}
+      onChange={e => onChange(e.target.value || null)}
+      onClick={e => e.stopPropagation()}
+      className="text-[10px] rounded-[6px] px-1.5 py-1 mt-1 max-w-full"
+      style={{ background: C.surface, border: `1px solid ${C.border2}`, color: C.muted }}
+    >
+      <option value="">Predeterminada</option>
+      {cargas.map(c => (
+        <option key={c.id} value={c.id}>{c.name}</option>
+      ))}
+    </select>
+  );
+}
+
 /* ───────────────────────── Mobile day card ───────────────────────── */
 
 function MobileDayCard({
-  day, entries, plan, persons, viewMode, isToday, planDailyProtein,
-  onCellPress, carbFoodsMap,
+  day, entries, getSlotPlan, persons, viewMode, isToday, dayTarget,
+  onCellPress, carbFoodsMap, cargas, dayCargaId, onSetDayCarga,
 }: {
   day:              WeekDay;
   entries:          PlannerEntry[];
-  plan:             MealPlan;
+  getSlotPlan:      (personId: string, slot: MealSlot) => Partial<StructuredSlotData> & { text?: string };
   persons:          { id: string; name: string }[];
   viewMode:         'person' | 'todos';
   isToday:          boolean;
-  planDailyProtein: number;
+  dayTarget:        number;
   onCellPress:      (day: WeekDay, slot: MealSlot) => void;
   carbFoodsMap:     Record<string, CarbFood[]>;
+  cargas:           Carga[];
+  dayCargaId:       string | undefined;
+  onSetDayCarga:    (cargaId: string | null) => void;
 }) {
   const dayProtein = entries
     .filter(e => e.day === day && e.proteinId)
     .reduce((s, e) => s + (e.cookedGrams ?? 0), 0);
-  const pct = planDailyProtein > 0 ? Math.min((dayProtein / planDailyProtein) * 100, 100) : 0;
+  const pct = dayTarget > 0 ? Math.min((dayProtein / dayTarget) * 100, 100) : 0;
 
   return (
     <div
@@ -467,11 +523,16 @@ function MobileDayCard({
         <div className="font-semibold text-[15px]" style={{ color: isToday ? C.accent : C.text }}>
           {DAY_FULL[day]}
         </div>
-        {dayProtein > 0 && (
-          <div className="text-[11px]" style={{ color: C.muted, fontFamily: "'DM Mono', monospace" }}>
-            {dayProtein}g prot.
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {dayProtein > 0 && (
+            <div className="text-[11px]" style={{ color: C.muted, fontFamily: "'DM Mono', monospace" }}>
+              {dayProtein}g prot.
+            </div>
+          )}
+          {viewMode === 'person' && (
+            <DayCargaPicker cargas={cargas} value={dayCargaId} onChange={onSetDayCarga} />
+          )}
+        </div>
       </div>
 
       {/* Progress bar */}
@@ -487,10 +548,34 @@ function MobileDayCard({
       <div className="p-3 flex flex-col gap-2">
         {MEAL_SLOTS.map(slot => {
           const accent   = SLOT_ACCENT[slot];
-          const slotPlan = (plan.slots?.[slot] ?? {}) as Partial<SlotData>;
+          const isFree   = slotType(slot) === 'free';
           const allFoods = Object.values(carbFoodsMap).flat();
 
           if (viewMode === 'todos') {
+            if (isFree) {
+              const texts = persons
+                .map(p => ({ p, text: getSlotPlan(p.id, slot).text }))
+                .filter(({ text }) => text !== undefined);
+              return (
+                <div key={slot} className="rounded-lg overflow-hidden" style={{ background: C.surface3 + '60' }}>
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5" style={{ borderBottom: `1px solid ${C.border}` }}>
+                    <span className="text-[12px]">{SLOT_ICONS[slot]}</span>
+                    <span className="text-[11px] font-medium" style={{ color: C.muted }}>{SLOT_LABELS[slot]}</span>
+                  </div>
+                  <div className="px-2.5 py-1.5">
+                    {texts.length === 0 ? (
+                      <span className="text-[11px]" style={{ color: C.dim }}>—</span>
+                    ) : texts.map(({ p, text }) => (
+                      <div key={p.id} className="mb-1 last:mb-0">
+                        <div className="text-[9px]" style={{ color: C.dim }}>{p.name}</div>
+                        <div className="text-[11px]" style={{ color: C.muted }}>{text || '—'}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+
             const cellEntries    = entries.filter(e => e.day === day && e.slot === slot);
             const proteinEntries = cellEntries.filter(e => e.proteinId);
 
@@ -523,11 +608,6 @@ function MobileDayCard({
                 <div className="flex items-center gap-1.5 px-2.5 py-1.5" style={{ borderBottom: `1px solid ${C.border}` }}>
                   <span className="text-[12px]">{SLOT_ICONS[slot]}</span>
                   <span className="text-[11px] font-medium" style={{ color: C.muted }}>{SLOT_LABELS[slot]}</span>
-                  {(slotPlan.protein ?? 0) > 0 && (
-                    <span className="ml-auto text-[9px]" style={{ color: '#22c97a', fontFamily: "'DM Mono', monospace" }}>
-                      {slotPlan.protein}g P
-                    </span>
-                  )}
                 </div>
                 <div className="px-2.5 py-1.5">
                   {groups.length === 0 && carbGroups.length === 0 ? (
@@ -579,7 +659,25 @@ function MobileDayCard({
             );
           }
 
-          // Person view — editable
+          // Person view
+          const slotPlan = getSlotPlan(persons[0]?.id ?? '', slot);
+
+          if (isFree) {
+            return (
+              <div key={slot} className="rounded-lg overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5" style={{ background: C.surface3 + '60', borderBottom: `1px solid ${C.border}` }}>
+                  <span className="text-[12px]">{SLOT_ICONS[slot]}</span>
+                  <span className="text-[11px] font-medium" style={{ color: C.muted }}>{SLOT_LABELS[slot]}</span>
+                </div>
+                <div className="px-2.5 py-2">
+                  <span className="text-[12px]" style={{ color: slotPlan.text ? C.text : C.dim }}>
+                    {slotPlan.text || '—'}
+                  </span>
+                </div>
+              </div>
+            );
+          }
+
           const entry   = entries.find(e => e.day === day && e.slot === slot);
           const protein = entry?.protein ?? null;
           const rawG    = protein ? rawWeight(entry!.cookedGrams ?? 0, protein.lossPercent) : 0;
@@ -592,7 +690,6 @@ function MobileDayCard({
               className="w-full text-left rounded-lg overflow-hidden cursor-pointer transition-all duration-150"
               style={{ border: `1px solid ${(protein || hasCarbs) ? accent + '44' : C.border}`, background: 'transparent' }}
             >
-              {/* Slot header */}
               <div className="flex items-center gap-1.5 px-2.5 py-1.5" style={{ background: C.surface3 + '60', borderBottom: `1px solid ${C.border}` }}>
                 <span className="text-[12px]">{SLOT_ICONS[slot]}</span>
                 <span className="text-[11px] font-medium" style={{ color: C.muted }}>{SLOT_LABELS[slot]}</span>
@@ -610,7 +707,6 @@ function MobileDayCard({
                 </div>
               </div>
 
-              {/* Content */}
               <div className="px-2.5 py-2">
                 {protein ? (
                   <div>
@@ -639,7 +735,6 @@ function MobileDayCard({
                   </div>
                 ) : null}
 
-                {/* Carb chips */}
                 {entry && hasCarbs && (
                   <div className="mt-1">
                     {(entry.carbs ?? []).map((pc, i) => {
@@ -671,7 +766,8 @@ function MobileDayCard({
 export default function PlannerPage({ person, setPerson }: PageProps) {
   const [weekStart,    setWeekStart]    = useState(() => localStorage.getItem('tiki_week') || getWeekStart());
   const [entries,      setEntries]      = useState<PlannerEntry[]>([]);
-  const [plans,        setPlans]        = useState<Record<string, MealPlan>>({});
+  const [cargasMap,    setCargasMap]    = useState<Record<string, Carga[]>>({});
+  const [dayCargas,    setDayCargas]    = useState<PlannerDayCarga[]>([]);
   const [persons,      setPersons]      = useState([{ id: 'ruben', name: 'Ruben' }, { id: 'sarahi', name: 'Sarahi' }]);
   const [viewMode,     setViewMode]     = useState<'person' | 'todos'>('person');
   const [picker,       setPicker]       = useState<{ day: WeekDay; slot: MealSlot } | null>(null);
@@ -683,16 +779,18 @@ export default function PlannerPage({ person, setPerson }: PageProps) {
   useEffect(() => { localStorage.setItem('tiki_week', weekStart); }, [weekStart]);
 
   const reload = () => api.getWeek(weekStart).then(setEntries).catch(() => {});
+  const reloadDayCargas = () => api.getDayCargas(weekStart).then(setDayCargas).catch(() => {});
 
   useEffect(() => {
     api.getPersons().then(setPersons).catch(() => {});
     reload();
+    reloadDayCargas();
   }, [weekStart]);
 
   useEffect(() => {
     persons.forEach(p => {
-      api.getMealPlan(p.id)
-        .then(plan => setPlans(prev => ({ ...prev, [p.id]: plan })))
+      api.getCargas(p.id)
+        .then(list => setCargasMap(prev => ({ ...prev, [p.id]: list })))
         .catch(() => {});
       api.getCarbFoods(p.id)
         .then(foods => setCarbFoodsMap(prev => ({ ...prev, [p.id]: foods })))
@@ -700,7 +798,19 @@ export default function PlannerPage({ person, setPerson }: PageProps) {
     });
   }, [persons]);
 
-  const plan      = plans[person]       ?? { personId: person, slots: {} };
+  const cargaForDay = (personId: string, day: WeekDay): Carga | undefined => {
+    const list = cargasMap[personId] ?? [];
+    const assigned = dayCargas.find(dc => dc.personId === personId && dc.day === day);
+    if (assigned) {
+      const carga = list.find(c => c.id === assigned.cargaId);
+      if (carga) return carga;
+    }
+    return list.find(c => c.isDefault) ?? list[0];
+  };
+
+  const getSlotPlan = (personId: string, day: WeekDay, slot: MealSlot): Partial<StructuredSlotData> & { text?: string } =>
+    cargaForDay(personId, day)?.slots?.[slot] ?? {};
+
   const carbFoods = carbFoodsMap[person] ?? [];
 
   const getEntry = (day: WeekDay, slot: MealSlot) =>
@@ -727,6 +837,14 @@ export default function PlannerPage({ person, setPerson }: PageProps) {
     setPicker(null);
   };
 
+  const handleSetDayCarga = (day: WeekDay, cargaId: string | null) => {
+    if (cargaId) {
+      api.setDayCarga({ weekStart, personId: person, day, cargaId }).then(reloadDayCargas);
+    } else {
+      api.clearDayCarga(weekStart, person, day).then(reloadDayCargas);
+    }
+  };
+
   const shiftWeek = (dir: number) => {
     const d = new Date(weekStart + 'T12:00:00');
     d.setDate(d.getDate() + dir * 7);
@@ -743,13 +861,14 @@ export default function PlannerPage({ person, setPerson }: PageProps) {
     return es.reduce((s, e) => s + (e.cookedGrams ?? 0), 0);
   };
 
-  const allPlanProtein = persons.reduce((s, p) => {
-    const pl = plans[p.id];
-    return s + Object.values(pl?.slots ?? {}).reduce((ss, sl) => ss + (sl?.protein ?? 0), 0);
-  }, 0);
-  const planDailyProtein = viewMode === 'todos'
-    ? allPlanProtein
-    : Object.values(plan.slots ?? {}).reduce((s, sl) => s + (sl?.protein ?? 0), 0);
+  const dayProteinTarget = (day: WeekDay) => {
+    const scope = viewMode === 'todos' ? persons.map(p => p.id) : [person];
+    return scope.reduce((sum, pid) => {
+      const carga = cargaForDay(pid, day);
+      const t = STRUCTURED_SLOTS.reduce((s, slot) => s + (carga?.slots?.[slot]?.protein ?? 0), 0);
+      return sum + t;
+    }, 0);
+  };
 
   const activeDayEntries = viewMode === 'todos'
     ? entries.filter(e => e.day === activeDay)
@@ -830,7 +949,8 @@ export default function PlannerPage({ person, setPerson }: PageProps) {
               {DAYS.map(day => {
                 const isToday = day === today && isCurrentWeek;
                 const dp  = dayProtein(day);
-                const pct = planDailyProtein > 0 ? Math.min((dp / planDailyProtein) * 100, 100) : 0;
+                const target = dayProteinTarget(day);
+                const pct = target > 0 ? Math.min((dp / target) * 100, 100) : 0;
                 return (
                   <th key={day} style={{ padding: '6px 6px 8px', textAlign: 'center', minWidth: 148, background: isToday ? C.accentGlow : C.bg, borderBottom: `2px solid ${isToday ? C.accent : C.border}` }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: isToday ? C.accent : C.text }}>{DAY_FULL[day]}</div>
@@ -840,6 +960,21 @@ export default function PlannerPage({ person, setPerson }: PageProps) {
                         <div style={{ height: '100%', width: `${pct}%`, background: pct >= 100 ? C.accent : C.yellow, borderRadius: 99, transition: 'width 0.3s' }} />
                       </div>
                     )}
+                    {viewMode === 'person' ? (
+                      <DayCargaPicker
+                        cargas={cargasMap[person] ?? []}
+                        value={dayCargas.find(dc => dc.personId === person && dc.day === day)?.cargaId}
+                        onChange={cargaId => handleSetDayCarga(day, cargaId)}
+                      />
+                    ) : (
+                      <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        {persons.map(p => (
+                          <div key={p.id} style={{ fontSize: 9, color: C.dim }}>
+                            {p.id === 'ruben' ? '🧔' : '👩'} {cargaForDay(p.id, day)?.name ?? '—'}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </th>
                 );
               })}
@@ -847,21 +982,13 @@ export default function PlannerPage({ person, setPerson }: PageProps) {
           </thead>
           <tbody>
             {MEAL_SLOTS.map((slot, si) => {
-              const slotPlan = (plan.slots?.[slot] ?? {}) as Partial<SlotData>;
-              const accent   = SLOT_ACCENT[slot];
+              const accent = SLOT_ACCENT[slot];
               return (
                 <tr key={slot}>
                   <td style={{ padding: '5px 10px 5px 8px', verticalAlign: 'middle', position: 'sticky', left: 0, background: C.bg, zIndex: 1, borderRight: `1px solid ${C.border}`, borderTop: `1px solid ${C.border}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ fontSize: 14 }}>{SLOT_ICONS[slot]}</span>
-                      <div>
-                        <div style={{ fontSize: 11, color: C.muted, fontWeight: 500, lineHeight: 1.2 }}>{SLOT_LABELS[slot]}</div>
-                        <div style={{ display: 'flex', gap: 4, marginTop: 2, flexWrap: 'wrap' }}>
-                          {(slotPlan.protein ?? 0) > 0 && <span style={{ fontSize: 9, color: '#22c97a', fontFamily: "'DM Mono', monospace" }}>{slotPlan.protein}g</span>}
-                          {(slotPlan.carbs   ?? 0) > 0 && <span style={{ fontSize: 9, color: '#60a5fa', fontFamily: "'DM Mono', monospace" }}>{slotPlan.carbs}porc</span>}
-                          {(slotPlan.fruit   ?? 0) > 0 && <span style={{ fontSize: 9, color: '#fb923c', fontFamily: "'DM Mono', monospace" }}>{slotPlan.fruit}tz</span>}
-                        </div>
-                      </div>
+                      <div style={{ fontSize: 11, color: C.muted, fontWeight: 500, lineHeight: 1.2 }}>{SLOT_LABELS[slot]}</div>
                     </div>
                   </td>
 
@@ -869,12 +996,32 @@ export default function PlannerPage({ person, setPerson }: PageProps) {
                     const isToday = day === today && isCurrentWeek;
 
                     if (viewMode === 'todos') {
+                      const slotTarget = persons.reduce(
+                        (acc, p) => {
+                          const sp = getSlotPlan(p.id, day, slot);
+                          return { protein: acc.protein + (sp.protein ?? 0), carbs: acc.carbs + (sp.carbs ?? 0) };
+                        },
+                        { protein: 0, carbs: 0 },
+                      );
+                      const freeTexts = persons
+                        .map(p => ({ personId: p.id, text: getSlotPlan(p.id, day, slot).text ?? '' }))
+                        .filter(ft => ft.text !== '');
                       return (
                         <TodosCell
                           key={day} day={day} slot={slot} allEntries={entries}
-                          persons={persons} slotPlan={slotPlan} accent={accent} isToday={isToday}
+                          persons={persons} slotTarget={slotTarget} freeTexts={freeTexts} accent={accent} isToday={isToday}
                           carbFoodsMap={carbFoodsMap}
                         />
+                      );
+                    }
+
+                    const slotPlan = getSlotPlan(person, day, slot);
+
+                    if (slotType(slot) === 'free') {
+                      return (
+                        <td key={day} style={{ padding: '4px', verticalAlign: 'top', borderTop: `1px solid ${C.border}`, background: isToday ? C.accentGlow : si % 2 === 0 ? 'transparent' : C.surface3 + '20' }}>
+                          <FreeSlotCard text={slotPlan.text} />
+                        </td>
                       );
                     }
 
@@ -896,7 +1043,6 @@ export default function PlannerPage({ person, setPerson }: PageProps) {
                         <div style={{ marginBottom: 3, padding: '4px 6px', borderRadius: '6px 6px 0 0', background: C.surface3 + '80', display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                           {(slotPlan.protein ?? 0) > 0 && <span style={{ fontSize: 9, color: '#22c97a', fontFamily: "'DM Mono', monospace" }}>{slotPlan.protein}g P</span>}
                           {(slotPlan.carbs   ?? 0) > 0 && <span style={{ fontSize: 9, color: '#60a5fa', fontFamily: "'DM Mono', monospace" }}>{slotPlan.carbs}porc C</span>}
-                          {(slotPlan.fruit   ?? 0) > 0 && <span style={{ fontSize: 9, color: '#fb923c', fontFamily: "'DM Mono', monospace" }}>{slotPlan.fruit}tz🍊</span>}
                           {slotPlan.notes && (
                             <span style={{ fontSize: 9, color: C.dim, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {slotPlan.notes}
@@ -975,13 +1121,16 @@ export default function PlannerPage({ person, setPerson }: PageProps) {
         <MobileDayCard
           day={activeDay}
           entries={activeDayEntries}
-          plan={plan}
-          persons={persons}
+          getSlotPlan={(personId, slot) => getSlotPlan(personId, activeDay, slot)}
+          persons={viewMode === 'todos' ? persons : [persons.find(p => p.id === person) ?? { id: person, name: person }]}
           viewMode={viewMode}
           isToday={activeDay === today && isCurrentWeek}
-          planDailyProtein={planDailyProtein}
+          dayTarget={dayProteinTarget(activeDay)}
           onCellPress={(d, s) => viewMode === 'person' && setPicker({ day: d, slot: s })}
           carbFoodsMap={carbFoodsMap}
+          cargas={cargasMap[person] ?? []}
+          dayCargaId={dayCargas.find(dc => dc.personId === person && dc.day === activeDay)?.cargaId}
+          onSetDayCarga={cargaId => handleSetDayCarga(activeDay, cargaId)}
         />
       </div>
 
@@ -991,7 +1140,7 @@ export default function PlannerPage({ person, setPerson }: PageProps) {
           slot={picker.slot}
           day={picker.day}
           current={getEntry(picker.day, picker.slot)}
-          planSlot={(plan.slots?.[picker.slot] as Partial<SlotData> | undefined) ?? {}}
+          planSlot={getSlotPlan(person, picker.day, picker.slot)}
           carbFoods={carbFoods}
           onSelect={handleAssign}
           onClear={handleClear}

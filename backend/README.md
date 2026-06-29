@@ -105,3 +105,16 @@ backend/
         ├── planner.ts
         └── shopping.ts
 ```
+
+## Running prisma when entities change
+
+First run:
+```
+npx prisma migrate deploy
+docker exec meal-planner-backend npx prisma migrate deploy
+```
+
+Finally run
+```
+npx prisma generate
+```

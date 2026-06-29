@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { C } from '../theme';
 import * as api from '../api';
-import { getWeekStart, formatWeekLabel, rawWeight, DAYS, DAY_LABELS, DAY_FULL, todayKey } from '../constants';
-import type { InBodyRecord, MealPlan, PlannerEntry } from '../types';
+import { getWeekStart, formatWeekLabel, STRUCTURED_SLOTS, DAYS, DAY_LABELS, DAY_FULL, todayKey } from '../constants';
+import type { InBodyRecord, Carga, PlannerEntry } from '../types';
 import type { PageProps } from '../App';
 
 function MacroRing({ label, value, target, color }: { label: string; value: number; target: number; color: string }) {
@@ -69,7 +69,7 @@ function StatCard({
 
 export default function Dashboard({ person, setPage }: PageProps) {
   const [inbody,  setInbody]  = useState<InBodyRecord[]>([]);
-  const [plan,    setPlan]    = useState<MealPlan>({ personId: person, slots: {} });
+  const [carga,   setCarga]   = useState<Carga | undefined>(undefined);
   const [entries, setEntries] = useState<PlannerEntry[]>([]);
   const [personName, setPersonName] = useState(person === 'ruben' ? 'Ruben' : 'Sarahi');
 
@@ -81,7 +81,7 @@ export default function Dashboard({ person, setPage }: PageProps) {
       if (p) setPersonName(p.name);
     }).catch(() => {});
     api.getInBody(person).then(setInbody).catch(() => {});
-    api.getMealPlan(person).then(setPlan).catch(() => {});
+    api.getCargas(person).then(list => setCarga(list.find(c => c.isDefault) ?? list[0])).catch(() => {});
     api.getWeek(weekStart).then(es => setEntries(es.filter(e => e.personId === person))).catch(() => {});
   }, [person, weekStart]);
 
@@ -99,8 +99,8 @@ export default function Dashboard({ person, setPage }: PageProps) {
   const todayEntries = today ? entries.filter(e => e.day === today && e.proteinId) : [];
   const todayCookedProtein = todayEntries.reduce((s, e) => s + (e.cookedGrams ?? 0), 0);
 
-  const totalProtein = Object.values(plan.slots ?? {}).reduce((s, sl) => s + (sl?.protein ?? 0), 0);
-  const totalCarbs   = Object.values(plan.slots ?? {}).reduce((s, sl) => s + (sl?.carbs   ?? 0), 0);
+  const totalProtein = STRUCTURED_SLOTS.reduce((s, slot) => s + (carga?.slots?.[slot]?.protein ?? 0), 0);
+  const totalCarbs   = STRUCTURED_SLOTS.reduce((s, slot) => s + (carga?.slots?.[slot]?.carbs   ?? 0), 0);
   const planDailyProtein = totalProtein;
 
   const dayTotals = DAYS.map(day => {

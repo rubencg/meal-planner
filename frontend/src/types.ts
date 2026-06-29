@@ -1,5 +1,6 @@
-export type MealSlot = 'desayuno' | 'snack1' | 'almuerzo' | 'snack2' | 'cena' | 'preEntreno' | 'postEntreno';
+export type MealSlot = 'entrenamiento' | 'desayuno' | 'snack1' | 'almuerzo' | 'snack2' | 'cena';
 export type WeekDay  = 'lunes' | 'martes' | 'miercoles' | 'jueves' | 'viernes';
+export type SlotType = 'structured' | 'free';
 
 export interface Person {
   id:   string;
@@ -52,18 +53,34 @@ export interface PlannerCarb {
   carbFood?:      CarbFood;
 }
 
-export interface SlotData {
-  protein:          number;
-  carbs:            number;        // PORTIONS (not grams)
-  fruit:            number;
-  notes:            string;
-  carbSelections?:  CarbSelection[];
+export interface StructuredSlotData {
+  protein?:        number;          // gramos
+  carbs?:          number;          // porciones
+  carbSelections?: CarbSelection[];
+  notes?:          string;
 }
 
-export interface MealPlan {
-  id?:      string;
-  personId: string;
-  slots:    Partial<Record<MealSlot, SlotData>>;
+export interface FreeSlotData {
+  text?: string;
+}
+
+export type SlotData = StructuredSlotData & FreeSlotData;
+
+export interface Carga {
+  id:        string;
+  personId:  string;
+  name:      string;
+  sortOrder: number;
+  isDefault: boolean;
+  slots:     Partial<Record<MealSlot, SlotData>>;
+}
+
+export interface PlannerDayCarga {
+  id:        string;
+  weekStart: string;
+  personId:  string;
+  day:       WeekDay;
+  cargaId:   string;
 }
 
 export interface PlannerEntry {
