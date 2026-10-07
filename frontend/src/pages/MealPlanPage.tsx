@@ -3,8 +3,8 @@ import { Check, X, Star, UtensilsCrossed } from 'lucide-react';
 import { SlotIcon } from '../components/SlotIcon';
 import { C } from '../theme';
 import * as api from '../api';
-import { MEAL_SLOTS, SLOT_LABELS, slotType, formatPortionUnits } from '../constants';
-import type { Carga, StructuredSlotData, SlotData, MealSlot, CarbFood, CarbSelection } from '../types';
+import { MEAL_SLOTS, SLOT_LABELS, slotType } from '../constants';
+import type { Carga, StructuredSlotData, SlotData, MealSlot } from '../types';
 import type { PageProps } from '../App';
 import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 
@@ -13,142 +13,9 @@ const MACRO_COLS = [
   { key: 'carbs'   as const, label: 'Carbos',   unit: 'porc', color: '#60a5fa' },
 ];
 
-/* ─── Carb selection editor (shared between desktop + mobile) ─── */
-function CarbSelectionsEditor({
-  selections, carbFoods, totalPortions, onChange,
-}: {
-  selections: CarbSelection[];
-  carbFoods:  CarbFood[];
-  totalPortions: number;
-  onChange: (next: CarbSelection[]) => void;
-}) {
-  const sumPortions = selections.reduce((s, r) => s + r.portions, 0);
-  const mismatch   = totalPortions > 0 && Math.abs(sumPortions - totalPortions) > 0.01;
-
-  const updateRow = (idx: number, patch: Partial<CarbSelection>) => {
-    const next = selections.map((r, i) => i === idx ? { ...r, ...patch } : r);
-    onChange(next);
-  };
-
-  const removeRow = (idx: number) => {
-    onChange(selections.filter((_, i) => i !== idx));
-  };
-
-  const addRow = () => {
-    const firstFood = carbFoods[0];
-    if (!firstFood) return;
-    onChange([...selections, { carbFoodId: firstFood.id, portions: 0.5 }]);
-  };
-
-  const equivParts = selections
-    .map(sel => {
-      const food = carbFoods.find(f => f.id === sel.carbFoodId);
-      if (!food || !sel.portions) return null;
-      return `${formatPortionUnits(sel.portions, food)} ${food.name}`;
-    })
-    .filter((x): x is string => x !== null);
-
-  return (
-    <div className="flex flex-col gap-2">
-      {selections.length === 0 ? (
-        <div className="text-[12px]" style={{ color: C.dim }}>Sin selección de carbohidratos.</div>
-      ) : (
-        selections.map((sel, idx) => {
-          const food = carbFoods.find(f => f.id === sel.carbFoodId);
-          return (
-            <div key={idx} className="flex items-center gap-2">
-              <select
-                value={sel.carbFoodId}
-                onChange={e => updateRow(idx, { carbFoodId: e.target.value })}
-                className="flex-1 rounded-[7px] px-2 py-2 text-[12px] min-h-[36px]"
-                style={{ background: C.surface, border: `1px solid ${C.border2}`, color: C.text }}
-              >
-                {carbFoods.map(f => (
-                  <option key={f.id} value={f.id}>{f.name}</option>
-                ))}
-              </select>
-              <input
-                type="number"
-                min={0.5}
-                step={0.5}
-                value={sel.portions}
-                onChange={e => updateRow(idx, { portions: parseFloat(e.target.value) || 0.5 })}
-                className="rounded-[7px] px-2 py-2 text-[12px] text-center min-h-[36px]"
-                style={{ width: 64, background: C.surface, border: `1px solid ${C.border2}`, color: C.text, fontFamily: "'DM Mono', monospace" }}
-              />
-              <span className="text-[11px]" style={{ color: C.dim }}>porc.</span>
-              {food && sel.portions > 0 && (
-                <span className="text-[11px]" style={{ color: '#60a5fa', minWidth: 52 }}>
-                  {formatPortionUnits(sel.portions, food)}
-                </span>
-              )}
-              <button
-                onClick={() => removeRow(idx)}
-                className="px-2 py-1 rounded-[6px] text-[12px] cursor-pointer min-h-[36px]"
-                style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}
-              >
-                <X size={14} />
-              </button>
-            </div>
-          );
-        })
-      )}
-
-      <button
-        onClick={addRow}
-        disabled={carbFoods.length === 0}
-        className="text-[12px] px-3 py-1.5 rounded-[7px] cursor-pointer self-start min-h-[36px]"
-        style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}
-      >
-        + Agregar carbo
-      </button>
-
-      {equivParts.length > 0 && (
-        <div className="text-[12px] rounded-[7px] p-2" style={{ background: C.surface2, color: C.muted }}>
-          Equivale a: <span style={{ color: '#60a5fa' }}>{equivParts.join(' + ')}</span>
-        </div>
-      )}
-
-      {mismatch && (
-        <div className="text-[11px] px-2 py-1.5 rounded-[7px]" style={{ background: '#60a5fa12', color: '#60a5fa', border: '1px solid #60a5fa30' }}>
-          Las porciones seleccionadas ({sumPortions.toFixed(1)}) no coinciden con la meta ({totalPortions})
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ─── Carb chips (read-only display) ─── */
-function CarbChips({ selections, carbFoods }: { selections: CarbSelection[]; carbFoods: CarbFood[] }) {
-  const items = selections
-    .map(sel => {
-      const food = carbFoods.find(f => f.id === sel.carbFoodId);
-      if (!food) return null;
-      return { sel, food };
-    })
-    .filter((x): x is { sel: CarbSelection; food: CarbFood } => x !== null);
-
-  if (items.length === 0) return <span style={{ color: C.dim, fontSize: 11 }}>Sin selección</span>;
-
-  return (
-    <div className="flex flex-wrap gap-1 mt-1">
-      {items.map(({ sel, food }, i) => (
-        <span
-          key={i}
-          className="text-[11px] px-2 py-0.5 rounded-full"
-          style={{ background: '#60a5fa14', color: '#60a5fa', border: '1px solid #60a5fa28' }}
-        >
-          {formatPortionUnits(sel.portions, food)} {food.name}
-        </span>
-      ))}
-    </div>
-  );
-}
-
 export default function MealPlanPage({ person }: PageProps) {
   const [cargas,      setCargas]      = useState<Carga[]>([]);
   const [activeId,    setActiveId]    = useState<string | null>(null);
-  const [carbFoods,   setCarbFoods]   = useState<CarbFood[]>([]);
   const [editingSlot, setEditingSlot] = useState<MealSlot | null>(null);
   const [draft,       setDraft]       = useState<Partial<StructuredSlotData>>({});
   const [saved,       setSaved]       = useState(false);
@@ -172,7 +39,6 @@ export default function MealPlanPage({ person }: PageProps) {
       const p = ps.find(x => x.id === person);
       if (p) setPersonName(p.name);
     }).catch(() => {});
-    api.getCarbFoods(person).then(setCarbFoods).catch(() => {});
     setActiveId(null);
     reloadCargas();
     setEditingSlot(null);
@@ -212,8 +78,7 @@ export default function MealPlanPage({ person }: PageProps) {
     const next: StructuredSlotData = {
       ...(protein !== undefined && !isNaN(protein) ? { protein } : {}),
       ...(carbs   !== undefined && !isNaN(carbs)   ? { carbs }   : {}),
-      notes:          draft.notes || undefined,
-      carbSelections: (draft.carbSelections ?? []).length > 0 ? draft.carbSelections : undefined,
+      notes: draft.notes || undefined,
     };
     await persistSlots({ ...(activeCarga.slots ?? {}), [editingSlot]: next });
     setEditingSlot(null);
@@ -472,23 +337,6 @@ export default function MealPlanPage({ person }: PageProps) {
                         />
                       </div>
 
-                      {carbFoods.length > 0 && (
-                        <div
-                          className="rounded-[10px] p-3"
-                          style={{ background: C.surface, border: `1px solid ${C.border}` }}
-                        >
-                          <div className="text-[11px] uppercase tracking-wider mb-2" style={{ color: '#60a5fa' }}>
-                            Selección de carbohidratos
-                          </div>
-                          <CarbSelectionsEditor
-                            selections={draft.carbSelections ?? []}
-                            carbFoods={carbFoods}
-                            totalPortions={draft.carbs ?? 0}
-                            onChange={next => setDraft(d => ({ ...d, carbSelections: next }))}
-                          />
-                        </div>
-                      )}
-
                       <div className="flex gap-2">
                         <button
                           onClick={saveStructuredSlot}
@@ -549,11 +397,6 @@ export default function MealPlanPage({ person }: PageProps) {
                         <div className="text-[12px] mt-2.5" style={{ color: C.muted }}>{s.notes}</div>
                       )}
 
-                      {(s.carbSelections?.length ?? 0) > 0 && (
-                        <div className="mt-2">
-                          <CarbChips selections={s.carbSelections!} carbFoods={carbFoods} />
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>
