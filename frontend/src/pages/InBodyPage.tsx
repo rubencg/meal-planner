@@ -1,12 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
-import { Chart, registerables } from 'chart.js';
+import { useState, useEffect } from 'react';
 import { C } from '../theme';
 import * as api from '../api';
 import type { InBodyRecord } from '../types';
 import type { PageProps } from '../App';
 import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
-
-Chart.register(...registerables);
+import { InBodyChart } from '../components/InBodyChart';
 
 const INBODY_FIELDS = [
   // Ordered in pairs: each two entries share a row in the 2-column modal grid
@@ -19,66 +17,6 @@ const INBODY_FIELDS = [
   { key: 'visceralFatLevel',      label: 'Grasa Visceral',  unit: 'lvl',  step: 1    },
   { key: 'waistHipRatio',         label: 'Cintura-Cadera',  unit: '',     step: 0.01 },
 ] as const;
-
-const CHARTS = [
-  { key: 'weight',                label: 'Peso',          color: '#22c97a', unit: 'kg' },
-  { key: 'skeletalMuscleMass',    label: 'Masa Muscular', color: '#60a5fa', unit: 'kg' },
-  { key: 'skeletalMusclePercent', label: '% Muscular',    color: '#a78bfa', unit: '%'  },
-  { key: 'bodyFatMass',           label: 'Grasa (kg)',    color: '#fb923c', unit: 'kg' },
-  { key: 'bodyFatPercent',        label: '% Grasa',       color: '#f87171', unit: '%'  },
-] as const;
-
-function LineChart({ records, field, color, unit }: { records: InBodyRecord[]; field: string; color: string; unit: string }) {
-  const ref      = useRef<HTMLCanvasElement>(null);
-  const chartRef = useRef<Chart | null>(null);
-
-  useEffect(() => {
-    if (!ref.current || records.length < 2) return;
-    chartRef.current?.destroy();
-    const labels = records.map(r =>
-      new Date(r.date + 'T12:00:00').toLocaleDateString('es-MX', { month: 'short', day: 'numeric' }),
-    );
-    const data = records.map(r => (r as unknown as Record<string, number>)[field]);
-    chartRef.current = new Chart(ref.current, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          data, borderColor: color, backgroundColor: color + '18', borderWidth: 2,
-          pointBackgroundColor: color, pointRadius: 4, fill: true, tension: 0.35,
-        }],
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: C.surface3, titleColor: C.text, bodyColor: C.muted,
-            borderColor: C.border2, borderWidth: 1,
-            callbacks: { label: ctx => ` ${ctx.parsed.y} ${unit}` },
-          },
-        },
-        scales: {
-          x: { grid: { color: C.border }, ticks: { color: C.muted, font: { size: 11, family: "'DM Mono'" } } },
-          y: { grid: { color: C.border }, ticks: { color: C.muted, font: { size: 11, family: "'DM Mono'" } } },
-        },
-      },
-    });
-    return () => { chartRef.current?.destroy(); chartRef.current = null; };
-  }, [records, field, color, unit]);
-
-  if (records.length < 2) {
-    return (
-      <div
-        className="flex items-center justify-center text-[13px]"
-        style={{ height: 160, color: C.muted }}
-      >
-        Se necesitan ≥2 registros
-      </div>
-    );
-  }
-  return <canvas ref={ref} style={{ height: 160 }} />;
-}
 
 type FieldKey = typeof INBODY_FIELDS[number]['key'];
 
@@ -190,7 +128,6 @@ export default function InBodyPage({ person }: PageProps) {
   const [records,       setRecords]       = useState<InBodyRecord[]>([]);
   const [modal,         setModal]         = useState<Partial<InBodyRecord> | null | 'new'>(null);
   const [deleteTarget,  setDeleteTarget]  = useState<InBodyRecord | null>(null);
-  const [activeChart,   setActiveChart]   = useState<string>('weight');
   const [personName,    setPersonName]    = useState(person === 'ruben' ? 'Ruben' : 'Sarahi');
 
   const reload = () => api.getInBody(person).then(setRecords).catch(() => {});
@@ -270,35 +207,7 @@ export default function InBodyPage({ person }: PageProps) {
       )}
 
       {/* Chart */}
-      {records.length >= 2 && (
-        <div
-          className="rounded-[14px] p-4 md:p-5 mb-6"
-          style={{ background: C.surface2, border: `1px solid ${C.border}` }}
-        >
-          <div className="flex gap-2 mb-4 flex-wrap">
-            {CHARTS.map(ch => (
-              <button
-                key={ch.key}
-                onClick={() => setActiveChart(ch.key)}
-                className="px-3.5 py-1.5 rounded-full text-[12px] cursor-pointer min-h-[36px]"
-                style={{
-                  border:     `1px solid ${activeChart === ch.key ? ch.color : C.border}`,
-                  background: activeChart === ch.key ? ch.color + '20' : 'transparent',
-                  color:      activeChart === ch.key ? ch.color : C.muted,
-                  fontWeight: activeChart === ch.key ? 600 : 400,
-                }}
-              >
-                {ch.label}
-              </button>
-            ))}
-          </div>
-          {CHARTS.filter(c => c.key === activeChart).map(ch => (
-            <div key={ch.key} className="relative" style={{ height: 200 }}>
-              <LineChart records={records} field={ch.key} color={ch.color} unit={ch.unit} />
-            </div>
-          ))}
-        </div>
-      )}
+      <InBodyChart records={records} />
 
       {/* Records table */}
       <div

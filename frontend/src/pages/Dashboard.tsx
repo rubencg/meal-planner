@@ -5,6 +5,7 @@ import * as api from '../api';
 import { getWeekStart, formatWeekLabel } from '../constants';
 import type { InBodyRecord } from '../types';
 import type { PageProps } from '../App';
+import { InBodyChart } from '../components/InBodyChart';
 
 function StatCard({
   label, value, unit, delta, icon: Icon, lowerIsBetter,
@@ -119,6 +120,7 @@ export default function Dashboard({ person, setPage }: PageProps) {
             <StatCard icon={Gauge} label="IMC"            value={latest.bmi}                            delta={delta('bmi')}               lowerIsBetter />
             <StatCard icon={Target} label="Grasa Visceral" value={latest.visceralFatLevel}  unit="lvl"  delta={delta('visceralFatLevel')}   lowerIsBetter />
           </div>
+          <InBodyChart records={inbody} />
         </>
       ) : (
         <div
