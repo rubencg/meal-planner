@@ -11,7 +11,6 @@ FRONTEND_PORT=5173
 # Vite va probando puertos consecutivos si encuentra el suyo ocupado; se libera un
 # rango para barrer procesos huérfanos de corridas previas que no quedaron en 5173.
 FRONTEND_PORT_RANGE_END=5180
-DB_PORT=5432
 
 # Mata cualquier proceso que esté escuchando en el puerto dado, para no chocar con una
 # instancia previa que quedó colgada. Usa lsof en Unix/Mac y netstat+taskkill en Git Bash (Windows).
@@ -40,10 +39,20 @@ ensure_deps() {
   fi
 }
 
+# Host y puerto de Postgres salen del DATABASE_URL (variable de entorno o backend/.env),
+# p. ej. postgresql://user:pass@host:5432/db → host, 5432.
+db_url="${DATABASE_URL:-$(grep -E '^DATABASE_URL=' "$DIR/backend/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"'"'"'\r')}"
+db_hostport="$(printf '%s' "$db_url" | sed -E 's#^[a-z]+://([^@/]*@)?([^/?]*).*#\2#')"
+DB_HOST="${db_hostport%%:*}"
+DB_PORT="${db_hostport##*:}"
+[ "$DB_PORT" = "$db_hostport" ] && DB_PORT=5432
+
 # Postgres no lo levanta este script; solo avisa si no responde para que el error
 # del backend no tome por sorpresa.
-if ! (exec 3<>"/dev/tcp/127.0.0.1/$DB_PORT") 2>/dev/null; then
-  echo "Aviso: Postgres no responde en localhost:$DB_PORT. El backend no podrá leer datos hasta que lo levantes."
+if [ -z "$DB_HOST" ]; then
+  echo "Aviso: no encontré DATABASE_URL en backend/.env."
+elif ! timeout 3 bash -c "exec 3<>/dev/tcp/$DB_HOST/$DB_PORT" 2>/dev/null; then
+  echo "Aviso: Postgres no responde en $DB_HOST:$DB_PORT. El backend no podrá leer datos hasta que responda."
 fi
 
 ensure_deps backend
