@@ -70,4 +70,6 @@ Key points:
 
 The app is Spanish-language. Core terms: *persona* (user), *comida* (meal), *almuerzo* (lunch), *cena* (dinner), *desayuno* (breakfast), *snack*, *planner* (weekly schedule), *compras* (shopping).
 
-Fixed meal slots: `desayuno`, `snack1`, `almuerzo` (formerly `comida`), `snack2`, `cena`, `preEntreno`, `postEntreno`.
+Fixed meal slots (`frontend/src/constants.ts`): `entrenamiento`, `desayuno`, `snack1` (Colación 12:30), `almuerzo` (Comida), `snack2` (Colación 6:30), `cena`. Structured (protein g / carbs portions / notes): desayuno, almuerzo, cena; the rest are free text. Per-person plans live in `Carga.slots` (several cargas per person).
+
+Monthly nutritionist PDFs are imported with the `/importar-plan` skill (`.claude/skills/importar-plan/`).
