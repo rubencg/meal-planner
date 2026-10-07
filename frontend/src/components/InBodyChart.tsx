@@ -1,93 +1,114 @@
 import { useState, useEffect, useRef } from 'react';
 import { Chart, registerables } from 'chart.js';
-import { C } from '../theme';
+import { cssVar } from '../theme';
+import { useThemeMode } from '../themeMode';
 import type { InBodyRecord } from '../types';
+import { Card, Segmented } from './ui';
 
 Chart.register(...registerables);
 
-const CHARTS = [
-  { key: 'weight',                label: 'Peso',          color: '#22c97a', unit: 'kg' },
-  { key: 'skeletalMuscleMass',    label: 'Masa Muscular', color: '#60a5fa', unit: 'kg' },
-  { key: 'skeletalMusclePercent', label: '% Muscular',    color: '#a78bfa', unit: '%'  },
-  { key: 'bodyFatMass',           label: 'Grasa (kg)',    color: '#fb923c', unit: 'kg' },
-  { key: 'bodyFatPercent',        label: '% Grasa',       color: '#f87171', unit: '%'  },
+export const TREND_METRICS = [
+  { key: 'weight',                label: 'Peso',     unit: 'kg' },
+  { key: 'skeletalMuscleMass',    label: 'Músculo',  unit: 'kg' },
+  { key: 'skeletalMusclePercent', label: '% Músculo', unit: '%' },
+  { key: 'bodyFatMass',           label: 'Grasa kg', unit: 'kg' },
+  { key: 'bodyFatPercent',        label: 'Grasa %',  unit: '%'  },
 ] as const;
 
-function LineChart({ records, field, color, unit }: { records: InBodyRecord[]; field: string; color: string; unit: string }) {
+export type TrendKey = typeof TREND_METRICS[number]['key'];
+
+/** Ink line over a lime area — colors are read from the active theme. */
+export function TrendChart({
+  records, field, unit, height = 200, compact = false,
+}: { records: InBodyRecord[]; field: TrendKey; unit: string; height?: number; compact?: boolean }) {
   const ref      = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
+  const mode     = useThemeMode();
 
   useEffect(() => {
     if (!ref.current || records.length < 2) return;
     chartRef.current?.destroy();
+
+    const ink    = cssVar('text');
+    const muted  = cssVar('muted');
+    const accent = cssVar('accent');
+    const grid   = cssVar('border');
+    const card   = cssVar('surface');
+    const tick   = { color: muted, font: { size: 11, family: "'Geist Mono'" } };
+
     const labels = records.map(r =>
       new Date(r.date + 'T12:00:00').toLocaleDateString('es-MX', { month: 'short', day: 'numeric' }),
     );
     const data = records.map(r => (r as unknown as Record<string, number>)[field]);
+
     chartRef.current = new Chart(ref.current, {
       type: 'line',
       data: {
         labels,
         datasets: [{
-          data, borderColor: color, backgroundColor: color + '18', borderWidth: 2,
-          pointBackgroundColor: color, pointRadius: 4, fill: true, tension: 0.35,
+          data,
+          borderColor: ink,
+          backgroundColor: accent + (mode === 'dark' ? '33' : '8C'),
+          borderWidth: 2.5,
+          pointBackgroundColor: accent,
+          pointBorderColor: ink,
+          pointBorderWidth: 2,
+          pointRadius: compact ? 0 : 4,
+          pointHoverRadius: 6,
+          fill: true,
+          tension: 0.35,
         }],
       },
       options: {
         responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: C.surface3, titleColor: C.text, bodyColor: C.muted,
-            borderColor: C.border2, borderWidth: 1,
-            callbacks: { label: ctx => ` ${ctx.parsed.y} ${unit}` },
+            backgroundColor: ink, titleColor: card, bodyColor: card,
+            padding: 10, cornerRadius: 12, displayColors: false,
+            titleFont: { family: "'Geist'" }, bodyFont: { family: "'Geist Mono'", size: 13 },
+            callbacks: { label: ctx => `${ctx.parsed.y} ${unit}` },
           },
         },
         scales: {
-          x: { grid: { color: C.border }, ticks: { color: C.muted, font: { size: 11, family: "'DM Mono'" } } },
-          y: { grid: { color: C.border }, ticks: { color: C.muted, font: { size: 11, family: "'DM Mono'" } } },
+          x: { grid: { display: false }, border: { display: false }, ticks: tick },
+          y: {
+            display: !compact,
+            grid: { color: grid }, border: { display: false },
+            ticks: { ...tick, maxTicksLimit: 5 },
+          },
         },
       },
     });
     return () => { chartRef.current?.destroy(); chartRef.current = null; };
-  }, [records, field, color, unit]);
+  }, [records, field, unit, mode, compact]);
 
-  return <canvas ref={ref} style={{ height: 160 }} />;
+  return (
+    <div className="relative" style={{ height }}>
+      <canvas ref={ref} />
+    </div>
+  );
 }
 
 // Renders nothing with fewer than 2 records — a single point isn't a trend
 export function InBodyChart({ records }: { records: InBodyRecord[] }) {
-  const [activeChart, setActiveChart] = useState<string>('weight');
+  const [active, setActive] = useState<TrendKey>('weight');
 
   if (records.length < 2) return null;
+  const metric = TREND_METRICS.find(m => m.key === active)!;
 
   return (
-    <div
-      className="rounded-[14px] p-4 md:p-5 mb-6"
-      style={{ background: C.surface2, border: `1px solid ${C.border}` }}
-    >
-      <div className="flex gap-2 mb-4 flex-wrap">
-        {CHARTS.map(ch => (
-          <button
-            key={ch.key}
-            onClick={() => setActiveChart(ch.key)}
-            className="px-3.5 py-1.5 rounded-full text-[12px] cursor-pointer min-h-[36px]"
-            style={{
-              border:     `1px solid ${activeChart === ch.key ? ch.color : C.border}`,
-              background: activeChart === ch.key ? ch.color + '20' : 'transparent',
-              color:      activeChart === ch.key ? ch.color : C.muted,
-              fontWeight: activeChart === ch.key ? 600 : 400,
-            }}
-          >
-            {ch.label}
-          </button>
-        ))}
+    <Card className="p-5 md:p-7 mb-4 md:mb-5">
+      <div className="flex flex-wrap justify-between items-center gap-3 mb-5">
+        <div className="text-[16px] font-semibold">Tendencia</div>
+        <Segmented
+          options={TREND_METRICS.map(m => ({ value: m.key, label: m.label }))}
+          value={active}
+          onChange={setActive}
+        />
       </div>
-      {CHARTS.filter(c => c.key === activeChart).map(ch => (
-        <div key={ch.key} className="relative" style={{ height: 200 }}>
-          <LineChart records={records} field={ch.key} color={ch.color} unit={ch.unit} />
-        </div>
-      ))}
-    </div>
+      <TrendChart records={records} field={active} unit={metric.unit} height={240} />
+    </Card>
   );
 }

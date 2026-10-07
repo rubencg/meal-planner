@@ -37,6 +37,6 @@ There is no router library. `App.tsx` uses a single `useState<Page>` to track th
 
 No global state library. Each page component manages its own state via `useState`/`useEffect`, fetching from the API on mount. The selected `Person` id is passed as a prop from `App.tsx` and persisted to `localStorage`.
 
-### Theming (`src/theme.ts`, `tailwind.config.js`)
+### Theming (`src/theme.ts`, `src/index.css`, `src/themeMode.ts`)
 
-Custom dark theme with emerald green accent (`#22c97a`). The Tailwind config extends with semantic color tokens (`bg`, `surface`, `accent`, `text`, `muted`, `dim`, etc.) and uses DM Sans / DM Mono fonts (loaded from Google Fonts in `index.html`). Each meal slot has its own accent color and emoji icon — see `src/constants.ts`.
+"Cítrico" design: light and dark themes with a lime accent (`#D2F34C`). All colors are CSS variables defined in `index.css` under `:root[data-theme="light"|"dark"]`; `C` in `theme.ts` maps token names to `var(--…)`, so inline styles follow the active theme. Never append hex alpha to a token (`C.red + '20'`) — use `alpha(C.red, 20)`; Chart.js needs resolved colors via `cssVar()`. `themeMode.ts` holds the toggle (persisted as `tiki_theme`, defaults to the OS preference; `index.html` applies it before first paint). Shared primitives (Button, Card, Sheet, Segmented, BigNumber, DeltaPill, Field) live in `src/components/ui.tsx`. Fonts: Bricolage Grotesque (display numbers/titles), Geist (body), Geist Mono. Meal-slot icon colors come from `--slot-*` variables.

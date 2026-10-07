@@ -1,30 +1,17 @@
 import { useEffect, useState } from 'react';
-import { UserRound } from 'lucide-react';
-import { C } from '../theme';
+import { LayoutGrid, Activity, Wheat, ClipboardList, Sun, Moon, type LucideIcon } from 'lucide-react';
+import { C, FONT } from '../theme';
+import { setThemeMode, useThemeMode } from '../themeMode';
 import * as api from '../api';
 import type { Person } from '../types';
 
 type Page = 'dashboard' | 'inbody' | 'carbos' | 'plannutri';
 
-const NAV: { id: Page; label: string; shortLabel: string; icon: React.ReactNode }[] = [
-  {
-    id: 'dashboard', label: 'Panel Principal', shortLabel: 'Panel',
-    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>,
-  },
-  {
-    id: 'inbody', label: 'Historial InBody', shortLabel: 'InBody',
-    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
-  },
-  {
-    id: 'carbos', label: 'Carbohidratos', shortLabel: 'Carbos',
-    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 12h18"/><path d="M5 8c0-1.5 1.5-3 7-3s7 1.5 7 3"/><path d="M5 16c0 1.5 1.5 3 7 3s7-1.5 7-3"/>
-    </svg>,
-  },
-  {
-    id: 'plannutri', label: 'Plan Nutricional', shortLabel: 'Plan',
-    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg>,
-  },
+const NAV: { id: Page; label: string; shortLabel: string; icon: LucideIcon }[] = [
+  { id: 'dashboard', label: 'Panel',            shortLabel: 'Panel',  icon: LayoutGrid },
+  { id: 'inbody',    label: 'Historial InBody', shortLabel: 'InBody', icon: Activity },
+  { id: 'carbos',    label: 'Carbohidratos',    shortLabel: 'Carbos', icon: Wheat },
+  { id: 'plannutri', label: 'Plan Nutricional', shortLabel: 'Plan',   icon: ClipboardList },
 ];
 
 interface SidebarProps {
@@ -34,206 +21,177 @@ interface SidebarProps {
   setPerson: (id: string) => void;
 }
 
-export default function Sidebar({ page, setPage, person, setPerson }: SidebarProps) {
+function Logo({ size = 40 }: { size?: number }) {
+  return (
+    <div className="flex items-center gap-3">
+      <img src="/favicon.svg" alt="" className="shrink-0" style={{ width: size, height: size }} />
+      <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: size * 0.55, letterSpacing: '-0.5px', color: C.text }}>
+        tiki
+      </span>
+    </div>
+  );
+}
+
+function ThemeToggle() {
+  const mode = useThemeMode();
+  const dark = mode === 'dark';
+  return (
+    <button
+      type="button"
+      onClick={() => setThemeMode(dark ? 'light' : 'dark')}
+      aria-label={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+      title={dark ? 'Modo claro' : 'Modo oscuro'}
+      className="w-[44px] h-[44px] rounded-full flex items-center justify-center cursor-pointer shrink-0"
+      style={{ background: C.surface3, color: C.text, border: 'none' }}
+    >
+      {dark ? <Sun size={18} /> : <Moon size={18} />}
+    </button>
+  );
+}
+
+function usePersons() {
   const [persons, setPersons] = useState<Person[]>([
     { id: 'ruben', name: 'Ruben' },
     { id: 'sarahi', name: 'Sarahi' },
   ]);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  useEffect(() => { api.getPersons().then(setPersons).catch(() => {}); }, []);
+  return persons;
+}
 
-  useEffect(() => {
-    api.getPersons().then(setPersons).catch(() => {});
-  }, []);
-
-  // Close drawer on page navigation
-  const handleSetPage = (p: Page) => {
-    setPage(p);
-    setDrawerOpen(false);
-  };
+export default function Sidebar({ page, setPage, person, setPerson }: SidebarProps) {
+  const persons = usePersons();
 
   return (
     <>
       {/* ── DESKTOP SIDEBAR (md+) ── */}
       <aside
-        className="hidden md:flex flex-col h-dvh sticky top-0 z-10 w-[232px] min-w-[232px]"
+        className="hidden md:flex flex-col h-dvh sticky top-0 z-10 w-[248px] min-w-[248px] px-[18px] py-7 gap-8"
         style={{ background: C.surface, borderRight: `1px solid ${C.border}` }}
       >
-        {/* Logo */}
-        <div className="flex items-center gap-2.5 px-[18px] py-[22px]" style={{ borderBottom: `1px solid ${C.border}` }}>
-          <img src="/favicon.svg" alt="Tiki" className="w-[34px] h-[34px] shrink-0" />
-          <div>
-            <div className="font-bold text-[16px] tracking-[-0.3px]" style={{ color: C.text }}>Tiki</div>
-            <div className="text-[10px] uppercase tracking-[0.06em]" style={{ color: C.muted }}>Planificador de Comidas</div>
-          </div>
-        </div>
+        <div className="px-2"><Logo /></div>
 
-        {/* Nav */}
-        <nav className="flex-1 overflow-y-auto px-2 py-2.5">
+        <nav className="flex flex-col gap-1 flex-1 overflow-y-auto">
           {NAV.map(item => {
             const active = page === item.id;
+            const Icon = item.icon;
             return (
               <button
                 key={item.id}
-                onClick={() => handleSetPage(item.id)}
-                className="flex items-center gap-2.5 w-full px-3 py-[9px] rounded-lg mb-0.5 text-left text-[13px] cursor-pointer border-none transition-all duration-150"
+                type="button"
+                onClick={() => setPage(item.id)}
+                aria-current={active ? 'page' : undefined}
+                className="flex items-center gap-3 w-full min-h-[46px] px-3.5 rounded-2xl text-left text-[14px] cursor-pointer border-none"
                 style={{
-                  background:  active ? C.accentGlow : 'transparent',
-                  color:       active ? C.accent : C.muted,
-                  fontFamily:  "'DM Sans', sans-serif",
-                  fontWeight:  active ? 600 : 400,
+                  background: active ? C.ink : 'transparent',
+                  color:      active ? C.inkText : C.muted,
+                  fontWeight: active ? 600 : 500,
                 }}
               >
-                <span className="shrink-0" style={{ opacity: active ? 1 : 0.65 }}>{item.icon}</span>
-                <span className="flex-1">{item.label}</span>
-                {active && <div className="w-[5px] h-[5px] rounded-full shrink-0" style={{ background: C.accent }} />}
+                <Icon size={18} strokeWidth={2} style={{ color: active ? C.accent : 'currentColor' }} />
+                {item.label}
               </button>
             );
           })}
         </nav>
 
-        {/* Person switcher */}
-        <div className="px-2 pb-4 pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
-          <div className="text-[10px] uppercase tracking-[0.08em] mb-2 pl-1" style={{ color: C.dim }}>Persona Activa</div>
-          <div className="flex gap-1.5">
-            {persons.map(p => (
-              <button
-                key={p.id}
-                onClick={() => setPerson(p.id)}
-                className="flex-1 py-2 px-1 rounded-[9px] cursor-pointer text-[13px] transition-all duration-150"
-                style={{
-                  border:      `1px solid ${person === p.id ? C.accent : C.border}`,
-                  background:  person === p.id ? C.accentGlow : 'transparent',
-                  color:       person === p.id ? C.accent : C.muted,
-                  fontFamily:  "'DM Sans', sans-serif",
-                  fontWeight:  person === p.id ? 600 : 400,
-                }}
-              >
-                <div className="flex justify-center mb-1"><UserRound size={20} /></div>
-                {p.name}
-              </button>
-            ))}
+        <div className="flex flex-col gap-3 px-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[12px] font-semibold" style={{ color: C.muted }}>Persona activa</span>
+            <ThemeToggle />
+          </div>
+          <div className="grid grid-cols-2 gap-1 p-1 rounded-2xl" style={{ background: C.surface3 }}>
+            {persons.map(p => {
+              const active = person === p.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setPerson(p.id)}
+                  aria-pressed={active}
+                  className="min-h-[44px] rounded-xl flex items-center justify-center gap-2 text-[13px] cursor-pointer border-none"
+                  style={{
+                    background: active ? C.accent : 'transparent',
+                    color:      active ? C.accentInk : C.muted,
+                    fontWeight: active ? 600 : 500,
+                  }}
+                >
+                  <span
+                    className="w-[22px] h-[22px] rounded-full inline-flex items-center justify-center text-[11px] font-bold"
+                    style={{ background: active ? C.accentInk : C.border2, color: active ? C.accent : C.text }}
+                  >
+                    {p.name[0]}
+                  </span>
+                  {p.name}
+                </button>
+              );
+            })}
           </div>
         </div>
       </aside>
 
-      {/* ── MOBILE BOTTOM NAV (< md) ── */}
-      {/* All 5 sections + "Más" drawer (person switching) */}
-      <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center"
-        style={{ background: C.surface, borderTop: `1px solid ${C.border}`, height: 64 }}
+      {/* ── MOBILE TOP BAR (< md) ── */}
+      <div
+        className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-[64px]"
+        style={{ background: C.bg }}
       >
-        {/* Primary 5 nav items */}
+        <Logo size={34} />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <div className="flex gap-1 p-1 rounded-full" style={{ background: C.surface }}>
+            {persons.map(p => {
+              const active = person === p.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setPerson(p.id)}
+                  aria-label={p.name}
+                  aria-pressed={active}
+                  className="w-[38px] h-[38px] rounded-full text-[14px] font-bold cursor-pointer border-none"
+                  style={{
+                    background: active ? C.accent : 'transparent',
+                    color:      active ? C.accentInk : C.muted,
+                  }}
+                >
+                  {p.name[0]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ── MOBILE FLOATING NAV (< md) ── */}
+      <nav
+        className="md:hidden fixed left-4 right-4 z-40 grid grid-cols-4 gap-1 p-1.5 rounded-full h-[64px]"
+        style={{
+          bottom: 'calc(16px + env(safe-area-inset-bottom))',
+          background: C.ink,
+          boxShadow: '0 10px 30px rgba(0,0,0,0.18)',
+        }}
+      >
         {NAV.map(item => {
           const active = page === item.id;
+          const Icon = item.icon;
           return (
             <button
               key={item.id}
-              onClick={() => handleSetPage(item.id)}
-              className="flex-1 flex flex-col items-center justify-center gap-1 h-full border-none cursor-pointer transition-all duration-150 min-w-0"
-              style={{ background: 'transparent', color: active ? C.accent : C.muted }}
+              type="button"
+              onClick={() => setPage(item.id)}
+              aria-label={item.label}
+              aria-current={active ? 'page' : undefined}
+              className="flex items-center justify-center gap-1.5 rounded-full border-none cursor-pointer min-w-0 text-[13px] font-semibold"
+              style={{
+                background: active ? C.accent : 'transparent',
+                color:      active ? C.accentInk : C.inkMuted,
+              }}
             >
-              <span style={{ opacity: active ? 1 : 0.55 }}>{item.icon}</span>
-              <span className="text-[9px] font-medium leading-none truncate w-full text-center px-0.5">
-                {item.shortLabel}
-              </span>
+              <Icon size={19} strokeWidth={2} />
+              {active && <span className="truncate">{item.shortLabel}</span>}
             </button>
           );
         })}
-
-        {/* More / InBody button */}
-        <button
-          onClick={() => setDrawerOpen(true)}
-          className="flex-1 flex flex-col items-center justify-center gap-1 h-full border-none cursor-pointer transition-all duration-150"
-          style={{ background: 'transparent', color: page === 'inbody' ? C.accent : C.muted }}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: page === 'inbody' ? 1 : 0.55 }}>
-            <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
-          </svg>
-          <span className="text-[9px] font-medium leading-none">Más</span>
-        </button>
       </nav>
-
-      {/* ── MOBILE DRAWER ── */}
-      {drawerOpen && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="md:hidden fixed inset-0 z-50"
-            style={{ background: 'rgba(0,0,0,0.7)' }}
-            onClick={() => setDrawerOpen(false)}
-          />
-          {/* Sheet */}
-          <div
-            className="md:hidden fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl"
-            style={{ background: C.surface, border: `1px solid ${C.border2}` }}
-          >
-            {/* Handle */}
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 rounded-full" style={{ background: C.border2 }} />
-            </div>
-
-            {/* Logo row */}
-            <div className="flex items-center gap-2.5 px-5 pt-2 pb-3" style={{ borderBottom: `1px solid ${C.border}` }}>
-              <img src="/favicon.svg" alt="Tiki" className="w-8 h-8 shrink-0" />
-              <div>
-                <div className="font-bold text-[15px]" style={{ color: C.text }}>Tiki</div>
-                <div className="text-[10px] uppercase tracking-wider" style={{ color: C.muted }}>Planificador de Comidas</div>
-              </div>
-            </div>
-
-            {/* Full nav list */}
-            <div className="px-3 py-2">
-              {NAV.map(item => {
-                const active = page === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleSetPage(item.id)}
-                    className="flex items-center gap-3 w-full px-3 py-3 rounded-xl mb-1 text-left text-[14px] cursor-pointer border-none transition-all duration-150"
-                    style={{
-                      background: active ? C.accentGlow : 'transparent',
-                      color:      active ? C.accent : C.muted,
-                      fontFamily: "'DM Sans', sans-serif",
-                      fontWeight: active ? 600 : 400,
-                    }}
-                  >
-                    <span style={{ opacity: active ? 1 : 0.65 }}>{item.icon}</span>
-                    <span className="flex-1">{item.label}</span>
-                    {active && <div className="w-2 h-2 rounded-full" style={{ background: C.accent }} />}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Person switcher */}
-            <div className="px-3 pb-3 pt-1" style={{ borderTop: `1px solid ${C.border}` }}>
-              <div className="text-[10px] uppercase tracking-[0.08em] mb-2 px-1 pt-2" style={{ color: C.dim }}>Persona Activa</div>
-              <div className="flex gap-2">
-                {persons.map(p => (
-                  <button
-                    key={p.id}
-                    onClick={() => { setPerson(p.id); setDrawerOpen(false); }}
-                    className="flex-1 py-3 px-2 rounded-xl cursor-pointer text-[14px] transition-all duration-150"
-                    style={{
-                      border:     `1px solid ${person === p.id ? C.accent : C.border}`,
-                      background: person === p.id ? C.accentGlow : 'transparent',
-                      color:      person === p.id ? C.accent : C.muted,
-                      fontFamily: "'DM Sans', sans-serif",
-                      fontWeight: person === p.id ? 600 : 400,
-                    }}
-                  >
-                    <div className="flex justify-center mb-1.5"><UserRound size={24} /></div>
-                    {p.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Safe area spacer */}
-            <div className="h-6" />
-          </div>
-        </>
-      )}
     </>
   );
 }

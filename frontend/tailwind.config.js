@@ -3,22 +3,24 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      // Semantic tokens backed by the CSS variables in index.css (light/dark)
       colors: {
-        bg:       '#070f0a',
-        surface:  '#0e1a12',
-        surface2: '#122016',
-        surface3: '#192c1e',
-        border:   '#1c2f24',
-        border2:  '#244035',
-        accent:   '#22c97a',
-        accent2:  '#18a862',
-        tktext:   '#e4f2eb',
-        muted:    '#6a9e82',
-        dim:      '#38624a',
+        bg:       'var(--bg)',
+        surface:  'var(--surface)',
+        surface2: 'var(--surface2)',
+        surface3: 'var(--surface3)',
+        border:   'var(--border)',
+        border2:  'var(--border2)',
+        accent:   'var(--accent)',
+        accent2:  'var(--accent)',
+        tktext:   'var(--text)',
+        muted:    'var(--muted)',
+        dim:      'var(--dim)',
       },
       fontFamily: {
-        sans: ["'DM Sans'", 'sans-serif'],
-        mono: ["'DM Mono'", 'monospace'],
+        sans:    ["'Geist'", 'system-ui', 'sans-serif'],
+        mono:    ["'Geist Mono'", 'ui-monospace', 'monospace'],
+        display: ["'Bricolage Grotesque'", 'system-ui', 'sans-serif'],
       },
       // Dynamic viewport height — avoids mobile browser chrome issues
       height: {

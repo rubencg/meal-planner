@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { C } from '../theme';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { C, FONT } from '../theme';
 import * as api from '../api';
 import type { InBodyRecord } from '../types';
 import type { PageProps } from '../App';
 import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 import { InBodyChart } from '../components/InBodyChart';
+import { BigNumber, Button, Card, DeltaPill, Field, PageHeader, Sheet, inputClass, inputStyle } from '../components/ui';
 
 const INBODY_FIELDS = [
   // Ordered in pairs: each two entries share a row in the 2-column modal grid
@@ -19,6 +21,27 @@ const INBODY_FIELDS = [
 ] as const;
 
 type FieldKey = typeof INBODY_FIELDS[number]['key'];
+
+const TREND_CARDS: { key: FieldKey; label: string; unit: string; lb: boolean }[] = [
+  { key: 'weight',                label: 'Peso',         unit: 'kg',  lb: true  },
+  { key: 'skeletalMuscleMass',    label: 'Músculo',      unit: 'kg',  lb: false },
+  { key: 'skeletalMusclePercent', label: '% Muscular',   unit: '%',   lb: false },
+  { key: 'bodyFatMass',           label: 'Grasa',        unit: 'kg',  lb: true  },
+  { key: 'bodyFatPercent',        label: '% Grasa',      unit: '%',   lb: true  },
+  { key: 'visceralFatLevel',      label: 'Gr. Visceral', unit: 'lvl', lb: true  },
+];
+
+const TABLE_COLS: { key: FieldKey; label: string; desktop: boolean }[] = [
+  { key: 'weight',                label: 'Peso',          desktop: false },
+  { key: 'skeletalMuscleMass',    label: 'Masa Muscular', desktop: true  },
+  { key: 'skeletalMusclePercent', label: '% Muscular',    desktop: false },
+  { key: 'bodyFatMass',           label: 'Grasa',         desktop: true  },
+  { key: 'bodyFatPercent',        label: '% Grasa',       desktop: false },
+  { key: 'bmi',                   label: 'IMC',           desktop: true  },
+];
+
+const fmtDate = (iso: string) =>
+  new Date(iso + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
 
 function InBodyModal({
   record, personId, onSave, onClose,
@@ -42,85 +65,41 @@ function InBodyModal({
   };
 
   return (
-    /* Backdrop */
-    <div
-      className="fixed inset-0 z-[100] flex items-end md:items-center justify-center md:p-5"
-      style={{ background: 'rgba(0,0,0,0.7)' }}
-      onClick={onClose}
-    >
-      {/* Sheet / dialog */}
-      <div
-        className="w-full md:max-w-[540px] max-h-[92dvh] overflow-y-auto rounded-t-2xl md:rounded-2xl"
-        style={{ background: C.surface, border: `1px solid ${C.border2}` }}
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Mobile handle */}
-        <div className="flex justify-center pt-3 pb-1 md:hidden">
-          <div className="w-10 h-1 rounded-full" style={{ background: C.border2 }} />
+    <Sheet title={`${form.id ? 'Editar' : 'Nuevo'} registro InBody`} onClose={onClose} maxWidth={560}>
+      <div className="grid grid-cols-2 gap-3.5 mb-7">
+        <div className="col-span-2">
+          <Field label="Fecha">
+            <input
+              type="date"
+              value={form.date ?? ''}
+              onChange={e => set('date', e.target.value)}
+              className={inputClass}
+              style={inputStyle}
+            />
+          </Field>
         </div>
 
-        <div className="p-5 md:p-7">
-          <div className="text-[17px] font-bold mb-5" style={{ color: C.text }}>
-            {form.id ? 'Editar' : 'Nuevo'} Registro InBody
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 mb-5">
-            {/* Date — full width */}
-            <div className="col-span-2">
-              <label className="text-[12px] block mb-1" style={{ color: C.muted }}>Fecha</label>
-              <input
-                type="date"
-                value={form.date ?? ''}
-                onChange={e => set('date', e.target.value)}
-                className="w-full rounded-lg px-3 py-2 text-[14px]"
-                style={{
-                  background: C.surface2, border: `1px solid ${C.border2}`,
-                  color: C.text, boxSizing: 'border-box',
-                }}
-              />
-            </div>
-
-            {INBODY_FIELDS.map(f => (
-              <div key={f.key}>
-                <label className="text-[12px] block mb-1" style={{ color: C.muted }}>
-                  {f.label}{f.unit ? ` (${f.unit})` : ''}
-                </label>
-                <input
-                  type="number"
-                  step={f.step}
-                  value={(form[f.key as FieldKey] as number | undefined) ?? ''}
-                  onChange={e => set(f.key, parseFloat(e.target.value) || '')}
-                  className="w-full rounded-lg px-3 py-2 text-[14px]"
-                  style={{
-                    background:  C.surface2, border: `1px solid ${C.border2}`,
-                    color:       C.text, fontFamily: "'DM Mono', monospace",
-                    boxSizing:   'border-box',
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-
-          <div className="flex gap-2.5 justify-end">
-            <button
-              onClick={onClose}
-              className="px-4 py-2.5 rounded-[9px] text-[14px] cursor-pointer min-h-[44px]"
-              style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-4 py-2.5 rounded-[9px] text-[14px] font-semibold cursor-pointer min-h-[44px]"
-              style={{ border: 'none', background: C.accent, color: '#000' }}
-            >
-              {saving ? 'Guardando…' : 'Guardar'}
-            </button>
-          </div>
-        </div>
+        {INBODY_FIELDS.map(f => (
+          <Field key={f.key} label={<>{f.label}{f.unit && <span style={{ color: C.muted, fontWeight: 400 }}> ({f.unit})</span>}</>}>
+            <input
+              type="number"
+              step={f.step}
+              value={(form[f.key as FieldKey] as number | undefined) ?? ''}
+              onChange={e => set(f.key, parseFloat(e.target.value) || '')}
+              className={`${inputClass} tabular`}
+              style={{ ...inputStyle, fontFamily: FONT.mono }}
+            />
+          </Field>
+        ))}
       </div>
-    </div>
+
+      <div className="flex gap-2.5 justify-end">
+        <Button variant="secondary" onClick={onClose}>Cancelar</Button>
+        <Button variant="primary" onClick={handleSave} disabled={saving}>
+          {saving ? 'Guardando…' : 'Guardar'}
+        </Button>
+      </div>
+    </Sheet>
   );
 }
 
@@ -151,187 +130,95 @@ export default function InBodyPage({ person }: PageProps) {
   };
 
   return (
-    <div className="px-4 py-6 md:px-8 md:py-7">
-      {/* Header */}
-      <div className="flex justify-between items-start mb-6 gap-3">
-        <div>
-          <h1 className="text-[22px] md:text-[24px] font-bold tracking-[-0.4px] m-0" style={{ color: C.text }}>
-            Historial InBody
-          </h1>
-          <div className="text-[13px] mt-1" style={{ color: C.muted }}>
-            {personName} · {records.length} registro{records.length !== 1 ? 's' : ''}
-          </div>
-        </div>
-        <button
-          onClick={() => setModal('new')}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-[10px] text-[14px] font-semibold cursor-pointer shrink-0 min-h-[44px]"
-          style={{ border: 'none', background: C.accent, color: '#000' }}
-        >
-          + Agregar
-        </button>
-      </div>
+    <div className="px-4 py-5 md:px-12 md:py-10 max-w-[1240px]">
+      <PageHeader
+        eyebrow={<>{personName} · {records.length} registro{records.length !== 1 ? 's' : ''}</>}
+        title="Historial InBody"
+        actions={
+          <Button variant="primary" onClick={() => setModal('new')} icon={<Plus size={16} strokeWidth={2.5} style={{ color: C.primaryIcon }} />}>
+            Nuevo registro
+          </Button>
+        }
+      />
 
-      {/* Trend cards */}
+      {/* Latest values */}
       {latest && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-6">
-          {([
-            { key: 'weight',                label: 'Peso',         unit: 'kg',  lb: true  },
-            { key: 'skeletalMuscleMass',    label: 'Músculo',      unit: 'kg',  lb: false },
-            { key: 'skeletalMusclePercent', label: '% Muscular',   unit: '%',   lb: false },
-            { key: 'bodyFatMass',           label: 'Grasa',        unit: 'kg',  lb: true  },
-            { key: 'bodyFatPercent',        label: '% Grasa',      unit: '%',   lb: true  },
-            { key: 'visceralFatLevel',      label: 'Gr. Visceral', unit: 'lvl', lb: true  },
-          ] as { key: FieldKey; label: string; unit: string; lb: boolean }[]).map(f => {
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 md:gap-3 mb-4 md:mb-5">
+          {TREND_CARDS.map((f, i) => {
             const d = delta(f.key);
-            const better = d != null ? (f.lb ? d < 0 : d > 0) : false;
             return (
-              <div
-                key={f.key}
-                className="rounded-xl p-3.5"
-                style={{ background: C.surface2, border: `1px solid ${C.border}` }}
-              >
-                <div className="text-[11px] mb-1.5" style={{ color: C.muted }}>{f.label}</div>
-                <div className="text-[22px] font-bold" style={{ color: C.text, fontFamily: "'DM Mono', monospace" }}>
-                  {(latest[f.key] as number | undefined) ?? '—'}
-                  <span className="text-[12px] font-normal ml-0.5" style={{ color: C.muted }}> {f.unit}</span>
+              <Card key={f.key} tone={i === 0 ? 'accent' : 'surface'} className="p-4 md:p-5 flex flex-col gap-4 justify-between">
+                <div className="flex justify-between items-start gap-2">
+                  <span className="text-[13px] font-semibold">{f.label}</span>
+                  {d != null && <DeltaPill delta={d} lowerIsBetter={f.lb} onAccent={i === 0} />}
                 </div>
-                {d != null && (
-                  <div className="text-[11px] mt-1" style={{ color: better ? C.accent : C.red }}>
-                    {d > 0 ? '+' : ''}{d} {f.unit}
-                  </div>
-                )}
-              </div>
+                <BigNumber value={(latest[f.key] as number | undefined) ?? '—'} unit={f.unit} size={34} unitColor={i === 0 ? undefined : C.muted} />
+              </Card>
             );
           })}
         </div>
       )}
 
-      {/* Chart */}
       <InBodyChart records={records} />
 
       {/* Records table */}
-      <div
-        className="rounded-[14px] overflow-hidden"
-        style={{ background: C.surface2, border: `1px solid ${C.border}` }}
-      >
-        <div
-          className="px-5 py-3.5 text-[13px] font-semibold"
-          style={{ borderBottom: `1px solid ${C.border}`, color: C.text }}
-        >
-          Todos los Registros
-        </div>
+      <Card className="overflow-hidden">
+        <div className="px-5 md:px-7 pt-5 pb-3 text-[15px] font-semibold">Todos los registros</div>
         {records.length === 0 ? (
-          <div className="p-8 text-center text-[14px]" style={{ color: C.muted }}>
+          <div className="px-5 pb-10 pt-4 text-center text-[14px]" style={{ color: C.muted }}>
             Sin registros. Agrega tu primera medición InBody.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-[13px]" style={{ borderCollapse: 'collapse' }}>
+          <div className="overflow-x-auto px-2 md:px-4 pb-3">
+            <table className="w-full text-[14px] tabular" style={{ borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ background: C.surface3 }}>
-                  <th className="px-4 py-2.5 text-left whitespace-nowrap font-medium" style={{ color: C.muted }}>
+                <tr>
+                  <th className="px-3 py-3 text-left whitespace-nowrap font-semibold text-[12px]" style={{ color: C.muted, borderBottom: `1px solid ${C.border}` }}>
                     Fecha
                   </th>
-                  {([
-                    { key: 'weight',                label: 'Peso',          desktop: false },
-                    { key: 'skeletalMuscleMass',    label: 'Masa Muscular', desktop: true  },
-                    { key: 'skeletalMusclePercent', label: '% Muscular',    desktop: false },
-                    { key: 'bodyFatMass',           label: 'Grasa',         desktop: true  },
-                    { key: 'bodyFatPercent',        label: '% Grasa',       desktop: false },
-                    { key: 'bmi',                   label: 'IMC',           desktop: true  },
-                  ] as { key: FieldKey; label: string; desktop: boolean }[]).map(f => (
+                  {TABLE_COLS.map(f => (
                     <th
                       key={f.key}
-                      className={`px-3 py-2.5 text-right whitespace-nowrap font-medium${f.desktop ? ' hidden md:table-cell' : ''}`}
-                      style={{ color: C.muted }}
+                      className={`px-3 py-3 text-right whitespace-nowrap font-semibold text-[12px]${f.desktop ? ' hidden md:table-cell' : ''}`}
+                      style={{ color: C.muted, borderBottom: `1px solid ${C.border}` }}
                     >
                       {f.label}
                     </th>
                   ))}
-                  <th className="px-3 py-2.5" />
+                  <th className="px-3 py-3" style={{ borderBottom: `1px solid ${C.border}` }}><span className="sr-only">Acciones</span></th>
                 </tr>
               </thead>
               <tbody>
-                {[...records].reverse().map((rec, i) => (
-                  <tr
-                    key={rec.id}
-                    style={{
-                      borderTop:  `1px solid ${C.border}`,
-                      background: i % 2 === 0 ? 'transparent' : C.surface3 + '40',
-                    }}
-                  >
-                    <td className="px-4 py-3 whitespace-nowrap" style={{ color: C.text, fontFamily: "'DM Mono', monospace" }}>
-                      {rec.date}
-                    </td>
-                    {([
-                      { key: 'weight',                desktop: false },
-                      { key: 'skeletalMuscleMass',    desktop: true  },
-                      { key: 'skeletalMusclePercent', desktop: false },
-                      { key: 'bodyFatMass',           desktop: true  },
-                      { key: 'bodyFatPercent',        desktop: false },
-                      { key: 'bmi',                   desktop: true  },
-                    ] as { key: FieldKey; desktop: boolean }[]).map(f => (
-                      <td
-                        key={f.key}
-                        className={`px-3 py-3 text-right${f.desktop ? ' hidden md:table-cell' : ''}`}
-                        style={{ color: C.text, fontFamily: "'DM Mono', monospace" }}
-                      >
-                        {(rec[f.key as FieldKey] as number | undefined) ?? '—'}
+                {[...records].reverse().map((rec, i, arr) => {
+                  const border = i < arr.length - 1 ? `1px solid ${C.border}` : 'none';
+                  return (
+                    <tr key={rec.id}>
+                      <td className="px-3 py-2.5 whitespace-nowrap" style={{ borderBottom: border }}>
+                        {fmtDate(rec.date)}
                       </td>
-                    ))}
-                    <td className="px-3 py-3 whitespace-nowrap">
-                      {/* Mobile: icon-only buttons */}
-                      <div className="flex md:hidden gap-1.5 justify-end">
-                        <button
-                          onClick={() => setModal(rec)}
-                          className="p-2 rounded-[7px] cursor-pointer"
-                          style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}
-                          title="Editar"
+                      {TABLE_COLS.map(f => (
+                        <td
+                          key={f.key}
+                          className={`px-3 py-2.5 text-right${f.desktop ? ' hidden md:table-cell' : ''}${f.key === 'weight' ? ' font-semibold' : ''}`}
+                          style={{ borderBottom: border }}
                         >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => setDeleteTarget(rec)}
-                          className="p-2 rounded-[7px] cursor-pointer"
-                          style={{ border: `1px solid ${C.red}33`, background: 'none', color: C.red }}
-                          title="Eliminar"
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="3 6 5 6 21 6"/>
-                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                            <path d="M10 11v6M14 11v6"/>
-                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                          </svg>
-                        </button>
-                      </div>
-                      {/* Desktop: text buttons */}
-                      <div className="hidden md:flex gap-1.5">
-                        <button
-                          onClick={() => setModal(rec)}
-                          className="px-2.5 py-1.5 rounded-[7px] text-[12px] cursor-pointer min-h-[36px]"
-                          style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => setDeleteTarget(rec)}
-                          className="px-2.5 py-1.5 rounded-[7px] text-[12px] cursor-pointer min-h-[36px]"
-                          style={{ border: `1px solid ${C.red}22`, background: 'none', color: C.red }}
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {(rec[f.key] as number | undefined) ?? '—'}
+                        </td>
+                      ))}
+                      <td className="px-2 py-2.5 whitespace-nowrap" style={{ borderBottom: border }}>
+                        <div className="flex gap-1 justify-end">
+                          <Button size="sm" variant="ghost" onClick={() => setModal(rec)} aria-label="Editar registro" title="Editar" icon={<Pencil size={15} />} style={{ border: 'none' }} />
+                          <Button size="sm" variant="ghost" onClick={() => setDeleteTarget(rec)} aria-label="Eliminar registro" title="Eliminar" icon={<Trash2 size={15} />} style={{ border: 'none', color: C.red }} />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
-      </div>
+      </Card>
 
       {modal !== null && (
         <InBodyModal

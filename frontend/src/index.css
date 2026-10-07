@@ -2,13 +2,95 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Cítrico theme tokens ──
+   Every color in the app reads from these variables (see theme.ts),
+   so switching data-theme on <html> re-skins everything at once. */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg:          #F1F2EC;
+  --surface:     #FFFFFF;
+  --surface2:    #F6F7F2;
+  --surface3:    #ECEEE5;
+  --border:      #E3E5DC;
+  --border2:     #CDD0C4;
+  --text:        #121410;
+  --muted:       #5A5F55;
+  --dim:         #858A7F;
+  --accent:      #D2F34C;
+  --accent-ink:  #121410;
+  --accent-text: #4A5E00;
+  --accent-soft: #EEF8C6;
+  --ink:         #121410;
+  --ink-text:    #FFFFFF;
+  --ink-muted:   #B5BAAD;
+  --ink-track:   #3A3E35;
+  --primary:     #121410;
+  --primary-text:#FFFFFF;
+  --primary-icon:#D2F34C;
+  --red:         #B42318;
+  --red-soft:    #FDE6E1;
+  --yellow:      #A15C07;
+  --blue:        #1D5FD1;
+  --purple:      #6D3FD8;
+  --orange:      #C2410C;
+  --green:       #3F7A00;
+  --overlay:     rgba(18, 20, 16, 0.45);
+
+  --slot-entrenamiento: #A15C07;
+  --slot-desayuno:      #4A7A00;
+  --slot-snack1:        #6D3FD8;
+  --slot-almuerzo:      #1D5FD1;
+  --slot-snack2:        #C2410C;
+  --slot-cena:          #C8231B;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg:          #0D0F0B;
+  --surface:     #171A14;
+  --surface2:    #1F2319;
+  --surface3:    #272C20;
+  --border:      #2A2F24;
+  --border2:     #3A4032;
+  --text:        #F1F3EA;
+  --muted:       #A3A99A;
+  --dim:         #737A69;
+  --accent:      #D2F34C;
+  --accent-ink:  #121410;
+  --accent-text: #D2F34C;
+  --accent-soft: #2B3315;
+  --ink:         #262C1E;
+  --ink-text:    #F1F3EA;
+  --ink-muted:   #A3A99A;
+  --ink-track:   #3A4230;
+  --primary:     #D2F34C;
+  --primary-text:#121410;
+  --primary-icon:#121410;
+  --red:         #FF8A7A;
+  --red-soft:    #3A1D18;
+  --yellow:      #FBBF24;
+  --blue:        #7FB0FF;
+  --purple:      #B9A2FF;
+  --orange:      #FF9F5A;
+  --green:       #8FD14F;
+  --overlay:     rgba(0, 0, 0, 0.65);
+
+  --slot-entrenamiento: #FBBF24;
+  --slot-desayuno:      #D2F34C;
+  --slot-snack1:        #B9A2FF;
+  --slot-almuerzo:      #7FB0FF;
+  --slot-snack2:        #FF9F5A;
+  --slot-cena:          #FF8A7A;
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body, #root {
   height: 100%;
-  background: #070f0a;
-  color: #e4f2eb;
-  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Geist', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -18,25 +100,25 @@ body {
 }
 
 /* Thin scrollbar */
-::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #1e3027; border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: #264035; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--dim); }
 
 /* Number input spinner */
 input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
 
 /* Base resets */
-input, button { outline: none; font-family: 'DM Sans', sans-serif; }
-input:focus { border-color: #22c97a !important; }
-button:hover { opacity: 0.85; }
+input, button, textarea { outline: none; font-family: inherit; }
+input:focus, textarea:focus { border-color: var(--text) !important; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+button { transition: opacity 150ms, background-color 150ms, color 150ms; }
+button:hover:not(:disabled) { opacity: 0.88; }
 
 /* Touch-friendly: eliminate 300ms tap delay everywhere */
 a, button, [role="button"] {
   touch-action: manipulation;
 }
 
-/* date input color fix on dark bg */
-input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.7);
-}
+/* Tabular figures keep columns of numbers aligned */
+.tabular { font-variant-numeric: tabular-nums; }

@@ -63,7 +63,7 @@ Key points:
 - All API calls go through `src/api.ts` — add new endpoints there
 - No global state library; each page fetches its own data on mount
 - Active `Person` id is stored in `localStorage` and passed as a prop through `App.tsx`
-- Custom dark Tailwind theme with emerald accent (`#22c97a`); semantic color tokens in `tailwind.config.js`
+- "Cítrico" light/dark theme (lime accent `#D2F34C`) driven by CSS variables in `src/index.css`; see `frontend/CLAUDE.md` › Theming
 - Meal slots (`MealSlot`) and weekdays (`WeekDay`) are Spanish-language string literals defined in `src/types.ts`
 
 ### Domain language

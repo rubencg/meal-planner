@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#22c97a"/>
-  <g fill="#070f0a">
+  <rect width="64" height="64" rx="14" fill="#D2F34C"/>
+  <g fill="#121410">
     <!-- Fronds -->
     <path d="M33 24 C26 15 14 15 9 25 C17 21 25 21 33 24 Z"/>
     <path d="M33 24 C40 15 52 15 57 25 C49 21 41 21 33 24 Z"/>
@@ -12,7 +12,7 @@
     <!-- Island -->
     <path d="M14 56 Q30 46 50 56 Z"/>
   </g>
-  <g fill="none" stroke="#070f0a" stroke-linecap="round">
+  <g fill="none" stroke="#121410" stroke-linecap="round">
     <!-- Trunk -->
     <path d="M28 52 C26 44 29 35 33 27" stroke-width="5"/>
   </g>

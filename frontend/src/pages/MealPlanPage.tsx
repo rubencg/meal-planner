@@ -1,16 +1,17 @@
 import { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { Check, X, Star, UtensilsCrossed } from 'lucide-react';
+import { Check, X, Star, UtensilsCrossed, Plus, Pencil } from 'lucide-react';
 import { SlotIcon } from '../components/SlotIcon';
-import { C } from '../theme';
+import { C, FONT } from '../theme';
 import * as api from '../api';
 import { MEAL_SLOTS, SLOT_LABELS, slotType } from '../constants';
 import type { Carga, StructuredSlotData, SlotData, MealSlot } from '../types';
 import type { PageProps } from '../App';
 import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
+import { BigNumber, Button, Card, PageHeader, inputStyle } from '../components/ui';
 
 const MACRO_COLS = [
-  { key: 'protein' as const, label: 'Proteína', unit: 'g',    color: '#22c97a' },
-  { key: 'carbs'   as const, label: 'Carbos',   unit: 'porc', color: '#60a5fa' },
+  { key: 'protein' as const, label: 'Proteína', unit: 'g'    },
+  { key: 'carbs'   as const, label: 'Carbos',   unit: 'porc' },
 ];
 
 /* ─── Textarea que crece con su contenido ─── */
@@ -139,48 +140,47 @@ export default function MealPlanPage({ person }: PageProps) {
     reloadCargas();
   };
 
+  const smallInput = 'rounded-full px-4 min-h-[44px] text-[14px]';
+
   return (
-    <div className="px-4 py-6 md:px-8 md:py-7 max-w-[920px]">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-5 gap-3">
-        <div>
-          <h1 className="text-[22px] md:text-[24px] font-bold tracking-[-0.4px] m-0" style={{ color: C.text }}>
-            Cargas
-          </h1>
-          <div className="text-[13px] mt-1" style={{ color: C.muted }}>
-            {personName} · Planes por intensidad de entrenamiento
-          </div>
-        </div>
-        {saved && (
-          <div
-            className="px-4 py-2 rounded-[10px] text-[13px] font-semibold shrink-0"
-            style={{ background: C.accentGlow, border: `1px solid ${C.accent}`, color: C.accent }}
+    <div className="px-4 py-5 md:px-12 md:py-10 max-w-[1100px]">
+      <PageHeader
+        eyebrow={<>{personName} · Planes por intensidad de entrenamiento</>}
+        title="Cargas"
+        actions={saved && (
+          <span
+            className="inline-flex items-center gap-1.5 px-4 min-h-[40px] rounded-full text-[13px] font-semibold"
+            style={{ background: C.accent, color: C.accentInk }}
+            role="status"
           >
-            <span className="flex items-center gap-1.5"><Check size={15} strokeWidth={2.5} /> Guardado</span>
-          </div>
+            <Check size={15} strokeWidth={2.5} /> Guardado
+          </span>
         )}
-      </div>
+      />
 
       {/* Cargas selector */}
       <div className="flex flex-wrap gap-2 mb-3">
-        {cargas.map(c => (
-          <button
-            key={c.id}
-            onClick={() => { setActiveId(c.id); setEditingSlot(null); }}
-            className="px-3.5 py-2 rounded-[9px] text-[13px] cursor-pointer transition-all duration-150 min-h-[40px]"
-            style={{
-              border:     `1px solid ${activeId === c.id ? C.accent : C.border2}`,
-              background: activeId === c.id ? C.accentGlow : 'none',
-              color:      activeId === c.id ? C.accent : C.text,
-              fontWeight: activeId === c.id ? 600 : 400,
-            }}
-          >
-            <span className="flex items-center gap-1.5">
-              {c.isDefault && <Star size={13} fill="currentColor" color={C.yellow} style={{ fill: C.yellow }} />}
+        {cargas.map(c => {
+          const active = activeId === c.id;
+          return (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => { setActiveId(c.id); setEditingSlot(null); }}
+              aria-pressed={active}
+              className="inline-flex items-center gap-1.5 px-4 min-h-[44px] rounded-full text-[14px] cursor-pointer"
+              style={{
+                border:     active ? '1px solid transparent' : `1px solid ${C.border2}`,
+                background: active ? C.ink : C.surface,
+                color:      active ? C.inkText : C.text,
+                fontWeight: active ? 600 : 500,
+              }}
+            >
+              {c.isDefault && <Star size={13} style={{ color: active ? C.accent : C.yellow, fill: 'currentColor' }} />}
               {c.name}
-            </span>
-          </button>
-        ))}
+            </button>
+          );
+        })}
         {creating ? (
           <div className="flex items-center gap-1.5">
             <input
@@ -189,19 +189,21 @@ export default function MealPlanPage({ person }: PageProps) {
               onChange={e => setNewName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleCreate()}
               placeholder="Nombre de la carga…"
-              className="rounded-[9px] px-3 py-2 text-[13px] min-h-[40px]"
-              style={{ background: C.surface, border: `1px solid ${C.accent}`, color: C.text }}
+              aria-label="Nombre de la nueva carga"
+              className={smallInput}
+              style={inputStyle}
             />
-            <button onClick={handleCreate} className="px-3 py-2 rounded-[9px] text-[13px] font-bold cursor-pointer min-h-[40px]" style={{ border: 'none', background: C.accent, color: '#000' }}><Check size={16} strokeWidth={2.5} /></button>
-            <button onClick={() => { setCreating(false); setNewName(''); }} className="px-3 py-2 rounded-[9px] text-[13px] cursor-pointer min-h-[40px]" style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}><X size={16} /></button>
+            <Button variant="accent" onClick={handleCreate} aria-label="Crear carga" icon={<Check size={16} strokeWidth={2.5} />} />
+            <Button variant="ghost" onClick={() => { setCreating(false); setNewName(''); }} aria-label="Cancelar" icon={<X size={16} />} />
           </div>
         ) : (
           <button
+            type="button"
             onClick={() => setCreating(true)}
-            className="px-3.5 py-2 rounded-[9px] text-[13px] cursor-pointer min-h-[40px]"
-            style={{ border: `1px dashed ${C.border2}`, background: 'none', color: C.muted }}
+            className="inline-flex items-center gap-1.5 px-4 min-h-[44px] rounded-full text-[14px] cursor-pointer"
+            style={{ border: `1px dashed ${C.border2}`, background: 'transparent', color: C.muted }}
           >
-            + Nueva carga
+            <Plus size={15} /> Nueva carga
           </button>
         )}
       </div>
@@ -217,176 +219,131 @@ export default function MealPlanPage({ person }: PageProps) {
                   value={renameValue}
                   onChange={e => setRenameValue(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleRename()}
-                  className="rounded-[9px] px-3 py-2 text-[13px] min-h-[40px]"
-                  style={{ background: C.surface, border: `1px solid ${C.accent}`, color: C.text }}
+                  aria-label="Nuevo nombre"
+                  className={smallInput}
+                  style={inputStyle}
                 />
-                <button onClick={handleRename} className="px-3 py-2 rounded-[9px] text-[13px] font-bold cursor-pointer min-h-[40px]" style={{ border: 'none', background: C.accent, color: '#000' }}><Check size={16} strokeWidth={2.5} /></button>
-                <button onClick={() => setRenaming(false)} className="px-3 py-2 rounded-[9px] text-[13px] cursor-pointer min-h-[40px]" style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}><X size={16} /></button>
+                <Button variant="accent" onClick={handleRename} aria-label="Guardar nombre" icon={<Check size={16} strokeWidth={2.5} />} />
+                <Button variant="ghost" onClick={() => setRenaming(false)} aria-label="Cancelar" icon={<X size={16} />} />
               </div>
             ) : (
-              <button
-                onClick={() => { setRenameValue(activeCarga.name); setRenaming(true); }}
-                className="px-3 py-1.5 rounded-lg text-[12px] cursor-pointer min-h-[36px]"
-                style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}
-              >
+              <Button size="sm" variant="ghost" onClick={() => { setRenameValue(activeCarga.name); setRenaming(true); }}>
                 Renombrar
-              </button>
+              </Button>
             )}
             {!activeCarga.isDefault && (
-              <button
-                onClick={handleSetDefault}
-                className="px-3 py-1.5 rounded-lg text-[12px] cursor-pointer min-h-[36px]"
-                style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}
-              >
+              <Button size="sm" variant="ghost" onClick={handleSetDefault}>
                 Marcar predeterminada
-              </button>
+              </Button>
             )}
-            <button
-              onClick={() => setConfirmDelete(true)}
-              disabled={cargas.length <= 1}
-              className="px-3 py-1.5 rounded-lg text-[12px] cursor-pointer min-h-[36px] disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ border: `1px solid ${C.red}44`, background: 'none', color: C.red }}
-            >
+            <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(true)} disabled={cargas.length <= 1} style={{ color: C.red }}>
               Borrar carga
-            </button>
+            </Button>
           </div>
 
           {/* Daily totals */}
-          <div
-            className="rounded-[14px] p-4 md:p-[22px] mb-5"
-            style={{ background: C.surface2, border: `1px solid ${C.border}` }}
-          >
-            <div className="text-[12px] font-semibold uppercase tracking-[0.06em] mb-3" style={{ color: C.muted }}>
-              Totales Diarios (comidas estructuradas)
-            </div>
+          <Card tone="accent" className="p-5 md:p-7 mb-4 md:mb-5">
+            <div className="text-[14px] font-semibold mb-4">Totales diarios · comidas estructuradas</div>
             <div className="grid grid-cols-2 gap-4">
               {MACRO_COLS.map(m => (
-                <div key={m.key} className="text-center">
-                  <div className="text-[24px] font-bold" style={{ color: m.color, fontFamily: "'DM Mono', monospace" }}>
-                    {totals[m.key]}
-                    <span className="text-[12px] font-normal ml-0.5" style={{ color: C.muted }}>{m.unit}</span>
-                  </div>
-                  <div className="text-[11px] mt-0.5" style={{ color: C.muted }}>{m.label} / día</div>
+                <div key={m.key} className="flex flex-col gap-2">
+                  <BigNumber value={totals[m.key]} unit={m.unit} size={56} />
+                  <div className="text-[13px] font-medium">{m.label} / día</div>
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
 
           {/* Slots */}
-          <div className="flex flex-col gap-2 mb-3.5">
+          <div className="grid md:grid-cols-2 gap-2.5 md:gap-3">
             {MEAL_SLOTS.map(slot => {
               const isStructured = slotType(slot) === 'structured';
               const s = (activeCarga.slots?.[slot] ?? {}) as Partial<SlotData>;
               const isEdit = editingSlot === slot;
 
+              const title = (
+                <div className="flex items-center gap-2.5">
+                  <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: C.surface3 }}>
+                    <SlotIcon slot={slot} size={17} />
+                  </span>
+                  <span className="text-[15px] font-semibold">{SLOT_LABELS[slot]}</span>
+                </div>
+              );
+
               if (!isStructured) {
                 return (
-                  <div
-                    key={slot}
-                    className="rounded-xl p-4"
-                    style={{ background: C.surface2, border: `1px solid ${C.border}` }}
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <SlotIcon slot={slot} size={17} />
-                      <span className="text-[14px] font-medium" style={{ color: C.text }}>{SLOT_LABELS[slot]}</span>
-                    </div>
+                  <Card key={slot} className="p-4 md:p-5 flex flex-col gap-3">
+                    {title}
                     <AutoTextarea
                       key={`${activeCarga.id}-${slot}`}
                       defaultValue={s.text ?? ''}
                       onBlur={e => saveFreeSlot(slot, e.target.value)}
                       placeholder="Ej: ½ tza de fruta + ½ medida de proteína…"
+                      aria-label={`Plan de ${SLOT_LABELS[slot]}`}
                       rows={2}
-                      className="w-full rounded-[9px] px-3 py-2.5 text-[13px] leading-relaxed resize-none overflow-hidden"
-                      style={{ background: C.surface, border: `1px solid ${C.border2}`, color: C.text, boxSizing: 'border-box' }}
+                      className="w-full rounded-2xl px-4 py-3 text-[14px] leading-relaxed resize-none overflow-hidden"
+                      style={inputStyle}
                     />
-                  </div>
+                  </Card>
                 );
               }
 
               return (
-                <div
-                  key={slot}
-                  className="rounded-xl overflow-hidden"
-                  style={{ background: C.surface2, border: `1px solid ${C.border}` }}
-                >
+                <Card key={slot} className="p-4 md:p-5 flex flex-col gap-3" style={isEdit ? { boxShadow: `inset 0 0 0 2px ${C.text}` } : undefined}>
                   {isEdit ? (
-                    <div className="p-4 flex flex-col gap-3">
-                      <div className="flex items-center gap-2">
-                        <SlotIcon slot={slot} size={17} />
-                        <span className="text-[14px] font-semibold" style={{ color: C.accent }}>{SLOT_LABELS[slot]}</span>
-                      </div>
-
+                    <>
+                      {title}
                       <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider block mb-1" style={{ color: MACRO_COLS[0].color }}>
-                            Proteína <span className="font-normal" style={{ color: C.dim }}>(g)</span>
+                        {MACRO_COLS.map(m => (
+                          <label key={m.key} className="flex flex-col gap-1.5">
+                            <span className="text-[13px] font-semibold">
+                              {m.label} <span style={{ color: C.muted, fontWeight: 400 }}>({m.unit})</span>
+                            </span>
+                            <input
+                              type="number" min={0} step={m.key === 'carbs' ? 0.5 : 1}
+                              value={draft[m.key] ?? ''}
+                              onChange={e => setDraft(d => ({ ...d, [m.key]: e.target.value === '' ? undefined : parseFloat(e.target.value) }))}
+                              placeholder="—"
+                              className="w-full rounded-2xl px-3 min-h-[48px] text-[16px] text-center tabular"
+                              style={{ ...inputStyle, fontFamily: FONT.mono }}
+                            />
                           </label>
-                          <input
-                            type="number" min={0} step={1}
-                            value={draft.protein ?? ''}
-                            onChange={e => setDraft(d => ({ ...d, protein: e.target.value === '' ? undefined : parseFloat(e.target.value) }))}
-                            placeholder="—"
-                            className="w-full rounded-[7px] px-2 py-2.5 text-[14px] text-center min-h-[44px]"
-                            style={{ background: C.surface, border: `1px solid ${C.accent}`, color: C.text, fontFamily: "'DM Mono', monospace", boxSizing: 'border-box' }}
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider block mb-1" style={{ color: MACRO_COLS[1].color }}>
-                            Carbos <span className="font-normal" style={{ color: C.dim }}>(porc)</span>
-                          </label>
-                          <input
-                            type="number" min={0} step={0.5}
-                            value={draft.carbs ?? ''}
-                            onChange={e => setDraft(d => ({ ...d, carbs: e.target.value === '' ? undefined : parseFloat(e.target.value) }))}
-                            placeholder="—"
-                            className="w-full rounded-[7px] px-2 py-2.5 text-[14px] text-center min-h-[44px]"
-                            style={{ background: C.surface, border: `1px solid ${C.accent}`, color: C.text, fontFamily: "'DM Mono', monospace", boxSizing: 'border-box' }}
-                          />
-                        </div>
+                        ))}
                       </div>
 
-                      <div>
-                        <label className="text-[11px] block mb-1" style={{ color: C.muted }}>Notas</label>
+                      <label className="flex flex-col gap-1.5">
+                        <span className="text-[13px] font-semibold">Notas</span>
                         <input
                           value={draft.notes ?? ''}
                           onChange={e => setDraft(d => ({ ...d, notes: e.target.value }))}
                           placeholder="Notas…"
-                          className="w-full rounded-[7px] px-3 py-2.5 text-[13px] min-h-[44px]"
-                          style={{ background: C.surface, border: `1px solid ${C.accent}`, color: C.text, boxSizing: 'border-box' }}
+                          className="w-full rounded-2xl px-4 min-h-[48px] text-[14px]"
+                          style={inputStyle}
                         />
-                      </div>
+                      </label>
 
                       <div className="flex gap-2">
-                        <button
-                          onClick={saveStructuredSlot}
-                          className="flex-1 py-2.5 rounded-[9px] text-[14px] font-bold cursor-pointer min-h-[44px]"
-                          style={{ border: 'none', background: C.accent, color: '#000' }}
-                        >
-                          <span className="flex items-center justify-center gap-1.5"><Check size={16} strokeWidth={2.5} /> Guardar</span>
-                        </button>
-                        <button
-                          onClick={() => setEditingSlot(null)}
-                          className="py-2.5 px-4 rounded-[9px] text-[14px] cursor-pointer min-h-[44px]"
-                          style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}
-                        >
+                        <Button variant="primary" onClick={saveStructuredSlot} className="flex-1" icon={<Check size={16} strokeWidth={2.5} />}>
+                          Guardar
+                        </Button>
+                        <Button variant="secondary" onClick={() => setEditingSlot(null)}>
                           Cancelar
-                        </button>
+                        </Button>
                       </div>
-                    </div>
+                    </>
                   ) : (
-                    <div className="p-4">
-                      <div className="flex justify-between items-center mb-3">
-                        <div className="flex items-center gap-2">
-                          <SlotIcon slot={slot} size={17} />
-                          <span className="text-[14px] font-medium" style={{ color: C.text }}>{SLOT_LABELS[slot]}</span>
-                        </div>
-                        <button
+                    <>
+                      <div className="flex justify-between items-center gap-2">
+                        {title}
+                        <Button
+                          size="sm"
+                          variant="ghost"
                           onClick={() => startEditStructured(slot)}
-                          className="px-3 py-1.5 rounded-lg text-[12px] cursor-pointer min-h-[36px]"
-                          style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}
+                          aria-label={`Editar ${SLOT_LABELS[slot]}`}
+                          icon={<Pencil size={14} />}
                         >
                           Editar
-                        </button>
+                        </Button>
                       </div>
 
                       <div className="grid grid-cols-2 gap-2">
@@ -394,55 +351,37 @@ export default function MealPlanPage({ person }: PageProps) {
                           const value = s[m.key];
                           const has   = value !== undefined && value > 0;
                           return (
-                            <div
-                              key={m.key}
-                              className="rounded-lg p-2 text-center"
-                              style={{ background: C.surface3 }}
-                            >
-                              <div
-                                className="text-[16px] font-bold"
-                                style={{ color: has ? m.color : C.dim, fontFamily: "'DM Mono', monospace" }}
-                              >
-                                {has ? value : '—'}
-                                {has && <span className="text-[10px] font-normal ml-0.5" style={{ color: C.dim }}>{m.unit}</span>}
-                              </div>
-                              <div className="text-[10px] mt-0.5" style={{ color: C.muted }}>{m.label}</div>
+                            <div key={m.key} className="rounded-2xl px-4 py-3 flex flex-col gap-1.5" style={{ background: C.surface2 }}>
+                              <span className="text-[12px] font-semibold" style={{ color: C.muted }}>{m.label}</span>
+                              <span style={{ color: has ? C.text : C.dim }}>
+                                <BigNumber value={has ? value : '—'} unit={has ? m.unit : undefined} size={30} unitColor={C.muted} />
+                              </span>
                             </div>
                           );
                         })}
                       </div>
 
                       {s.notes && (
-                        <div className="text-[12px] mt-2.5" style={{ color: C.muted }}>{s.notes}</div>
+                        <div className="text-[13px]" style={{ color: C.muted }}>{s.notes}</div>
                       )}
-
-                    </div>
+                    </>
                   )}
-                </div>
+                </Card>
               );
             })}
           </div>
         </>
       ) : (
-        <div
-          className="text-center py-12 px-5 rounded-[14px]"
-          style={{ background: C.surface2, border: `1px dashed ${C.border2}` }}
-        >
-          <div className="flex justify-center mb-3"><UtensilsCrossed size={34} strokeWidth={1.5} color={C.muted} /></div>
-          <div className="text-[15px] font-semibold mb-2" style={{ color: C.text }}>
-            Sin cargas configuradas
-          </div>
-          <div className="text-[13px] mb-4" style={{ color: C.muted }}>
+        <Card className="text-center py-12 px-5 flex flex-col items-center gap-3" style={{ border: `1px dashed ${C.border2}` }}>
+          <UtensilsCrossed size={34} strokeWidth={1.5} style={{ color: C.muted }} />
+          <div className="text-[16px] font-semibold">Sin cargas configuradas</div>
+          <div className="text-[14px] mb-2" style={{ color: C.muted }}>
             Crea la primera carga para empezar a capturar el plan de {personName}.
           </div>
-          <button
-            onClick={() => setCreating(true)}
-            className="px-4 py-2.5 rounded-[10px] text-[13px] font-bold cursor-pointer min-h-[44px]"
-            style={{ border: 'none', background: C.accent, color: '#000' }}
-          >
-            + Crear primera carga
-          </button>
-        </div>
+          <Button variant="accent" onClick={() => setCreating(true)} icon={<Plus size={16} strokeWidth={2.5} />}>
+            Crear primera carga
+          </Button>
+        </Card>
       )}
 
       {confirmDelete && activeCarga && (
@@ -456,3 +395,4 @@ export default function MealPlanPage({ person }: PageProps) {
     </div>
   );
 }
+

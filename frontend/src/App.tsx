@@ -36,8 +36,8 @@ export default function App() {
   return (
     <div className="flex h-dvh bg-bg text-tktext overflow-hidden">
       <Sidebar page={page} setPage={handleSetPage} person={person} setPerson={handleSetPerson} />
-      {/* Main content: on mobile add bottom padding for the bottom nav bar */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden pb-[64px] md:pb-0">
+      {/* Main content: on mobile leave room for the fixed top bar and floating nav */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden pt-[64px] pb-[110px] md:pt-0 md:pb-0">
         <PageComponent person={person} setPerson={handleSetPerson} setPage={handleSetPage} />
       </main>
     </div>
