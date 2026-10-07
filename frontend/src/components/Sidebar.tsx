@@ -24,10 +24,15 @@ interface SidebarProps {
 function Logo({ size = 40 }: { size?: number }) {
   return (
     <div className="flex items-center gap-3">
-      <img src="/favicon.svg" alt="" className="shrink-0" style={{ width: size, height: size }} />
-      <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: size * 0.55, letterSpacing: '-0.5px', color: C.text }}>
-        tiki
-      </span>
+      <img src="/favicon.svg?v=2" alt="" className="shrink-0" style={{ width: size, height: size }} />
+      <div className="flex flex-col" style={{ lineHeight: 1 }}>
+        <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: size * 0.5, letterSpacing: '-0.5px', color: C.text }}>
+          Tiki
+        </span>
+        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: size * 0.3, letterSpacing: '-0.2px', color: C.muted, marginTop: 3 }}>
+          Meal Planner
+        </span>
+      </div>
     </div>
   );
 }
