@@ -9,15 +9,14 @@ import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 Chart.register(...registerables);
 
 const INBODY_FIELDS = [
+  // Ordered in pairs: each two entries share a row in the 2-column modal grid
   { key: 'weight',                label: 'Peso',            unit: 'kg',   step: 0.1  },
+  { key: 'bmi',                   label: 'IMC',             unit: '',     step: 0.1  },
   { key: 'skeletalMuscleMass',    label: 'Masa Muscular',   unit: 'kg',   step: 0.1  },
   { key: 'skeletalMusclePercent', label: '% Muscular',      unit: '%',    step: 0.1  },
   { key: 'bodyFatMass',           label: 'Grasa',           unit: 'kg',   step: 0.1  },
   { key: 'bodyFatPercent',        label: '% Grasa',         unit: '%',    step: 0.1  },
-  { key: 'bmi',                   label: 'IMC',             unit: '',     step: 0.1  },
   { key: 'visceralFatLevel',      label: 'Grasa Visceral',  unit: 'lvl',  step: 1    },
-  { key: 'bmr',                   label: 'TMB',             unit: 'kcal', step: 1    },
-  { key: 'recommendedCalories',   label: 'Calorías Rec.',   unit: 'kcal', step: 1    },
   { key: 'waistHipRatio',         label: 'Cintura-Cadera',  unit: '',     step: 0.01 },
 ] as const;
 
