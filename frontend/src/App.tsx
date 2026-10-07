@@ -5,10 +5,8 @@ import InBodyPage from './pages/InBodyPage';
 import ProteinsPage from './pages/ProteinsPage';
 import CarbsPage from './pages/CarbsPage';
 import MealPlanPage from './pages/MealPlanPage';
-import PlannerPage from './pages/PlannerPage';
-import ShoppingPage from './pages/ShoppingPage';
 
-type Page = 'dashboard' | 'inbody' | 'proteinas' | 'carbos' | 'plannutri' | 'planner' | 'compras';
+type Page = 'dashboard' | 'inbody' | 'proteinas' | 'carbos' | 'plannutri';
 
 const PAGES: Record<Page, React.ComponentType<PageProps>> = {
   dashboard: Dashboard,
@@ -16,8 +14,6 @@ const PAGES: Record<Page, React.ComponentType<PageProps>> = {
   proteinas: ProteinsPage,
   carbos:    CarbsPage,
   plannutri: MealPlanPage,
-  planner:   PlannerPage,
-  compras:   ShoppingPage,
 };
 
 export interface PageProps {
@@ -27,7 +23,11 @@ export interface PageProps {
 }
 
 export default function App() {
-  const [page,   setPage]   = useState<Page>(() => (localStorage.getItem('tiki_page') as Page) || 'dashboard');
+  const [page,   setPage]   = useState<Page>(() => {
+    // Saved page may point to a removed section (e.g. 'planner'), so fall back to the dashboard
+    const saved = localStorage.getItem('tiki_page');
+    return saved && saved in PAGES ? saved as Page : 'dashboard';
+  });
   const [person, setPerson] = useState<string>(() => localStorage.getItem('tiki_person') || 'ruben');
 
   const handleSetPage   = (p: Page)   => { setPage(p);   localStorage.setItem('tiki_page', p); };
