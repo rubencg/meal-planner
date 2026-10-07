@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Check, X, Star, UtensilsCrossed } from 'lucide-react';
 import { SlotIcon } from '../components/SlotIcon';
 import { C } from '../theme';
@@ -12,6 +12,25 @@ const MACRO_COLS = [
   { key: 'protein' as const, label: 'Proteína', unit: 'g',    color: '#22c97a' },
   { key: 'carbs'   as const, label: 'Carbos',   unit: 'porc', color: '#60a5fa' },
 ];
+
+/* ─── Textarea que crece con su contenido ─── */
+function AutoTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  const resize = () => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight + 2}px`;
+  };
+  useLayoutEffect(resize, []);
+  return (
+    <textarea
+      {...props}
+      ref={ref}
+      onInput={e => { resize(); props.onInput?.(e); }}
+    />
+  );
+}
 
 export default function MealPlanPage({ person }: PageProps) {
   const [cargas,      setCargas]      = useState<Carga[]>([]);
@@ -271,13 +290,13 @@ export default function MealPlanPage({ person }: PageProps) {
                       <SlotIcon slot={slot} size={17} />
                       <span className="text-[14px] font-medium" style={{ color: C.text }}>{SLOT_LABELS[slot]}</span>
                     </div>
-                    <textarea
+                    <AutoTextarea
                       key={`${activeCarga.id}-${slot}`}
                       defaultValue={s.text ?? ''}
                       onBlur={e => saveFreeSlot(slot, e.target.value)}
                       placeholder="Ej: ½ tza de fruta + ½ medida de proteína…"
                       rows={2}
-                      className="w-full rounded-[9px] px-3 py-2.5 text-[13px] resize-none"
+                      className="w-full rounded-[9px] px-3 py-2.5 text-[13px] leading-relaxed resize-none overflow-hidden"
                       style={{ background: C.surface, border: `1px solid ${C.border2}`, color: C.text, boxSizing: 'border-box' }}
                     />
                   </div>
