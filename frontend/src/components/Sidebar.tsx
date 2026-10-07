@@ -4,7 +4,7 @@ import { C } from '../theme';
 import * as api from '../api';
 import type { Person } from '../types';
 
-type Page = 'dashboard' | 'inbody' | 'proteinas' | 'carbos' | 'plannutri';
+type Page = 'dashboard' | 'inbody' | 'carbos' | 'plannutri';
 
 const NAV: { id: Page; label: string; shortLabel: string; icon: React.ReactNode }[] = [
   {
@@ -14,10 +14,6 @@ const NAV: { id: Page; label: string; shortLabel: string; icon: React.ReactNode 
   {
     id: 'inbody', label: 'Historial InBody', shortLabel: 'InBody',
     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
-  },
-  {
-    id: 'proteinas', label: 'Proteínas', shortLabel: 'Proteínas',
-    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>,
   },
   {
     id: 'carbos', label: 'Carbohidratos', shortLabel: 'Carbos',

@@ -2,16 +2,14 @@ import { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import InBodyPage from './pages/InBodyPage';
-import ProteinsPage from './pages/ProteinsPage';
 import CarbsPage from './pages/CarbsPage';
 import MealPlanPage from './pages/MealPlanPage';
 
-type Page = 'dashboard' | 'inbody' | 'proteinas' | 'carbos' | 'plannutri';
+type Page = 'dashboard' | 'inbody' | 'carbos' | 'plannutri';
 
 const PAGES: Record<Page, React.ComponentType<PageProps>> = {
   dashboard: Dashboard,
   inbody:    InBodyPage,
-  proteinas: ProteinsPage,
   carbos:    CarbsPage,
   plannutri: MealPlanPage,
 };
