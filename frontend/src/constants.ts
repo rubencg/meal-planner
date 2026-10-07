@@ -15,15 +15,6 @@ export const SLOT_LABELS: Record<MealSlot, string> = {
   cena:          'Cena',
 };
 
-export const SLOT_ICONS: Record<MealSlot, string> = {
-  entrenamiento: '🏋️',
-  desayuno:      '🍳',
-  snack1:        '🍎',
-  almuerzo:      '🥗',
-  snack2:        '🥜',
-  cena:          '🍽️',
-};
-
 export const SLOT_ACCENT: Record<MealSlot, string> = {
   entrenamiento: '#fbbf24',
   desayuno:      '#22c97a',

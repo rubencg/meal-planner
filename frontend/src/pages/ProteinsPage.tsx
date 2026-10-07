@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Lightbulb } from 'lucide-react';
 import { C } from '../theme';
 import * as api from '../api';
 import type { Protein } from '../types';
@@ -300,7 +301,7 @@ export default function ProteinsPage(_props: PageProps) {
         className="rounded-xl p-3.5 mb-5 text-[13px] flex gap-2.5 items-start"
         style={{ background: C.surface2, border: `1px solid ${C.border}`, color: C.muted }}
       >
-        <span className="text-[18px] shrink-0">💡</span>
+        <Lightbulb size={18} color={C.yellow} className="shrink-0 mt-px" />
         <span>
           Al cocinar, las proteínas pierden peso. Registra el{' '}
           <strong style={{ color: C.text }}>% de pérdida</strong> de cada fuente. El planificador mostrará

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Scale, BicepsFlexed, Flame, Gauge, Target, Activity, Sun, Sunset, type LucideIcon } from 'lucide-react';
 import { C } from '../theme';
 import * as api from '../api';
 import { getWeekStart, formatWeekLabel } from '../constants';
@@ -6,9 +7,9 @@ import type { InBodyRecord } from '../types';
 import type { PageProps } from '../App';
 
 function StatCard({
-  label, value, unit, delta, icon, lowerIsBetter,
+  label, value, unit, delta, icon: Icon, lowerIsBetter,
 }: {
-  label: string; value: number | undefined; unit?: string; delta?: number | null; icon: string; lowerIsBetter?: boolean;
+  label: string; value: number | undefined; unit?: string; delta?: number | null; icon: LucideIcon; lowerIsBetter?: boolean;
 }) {
   const better = delta !== undefined && delta !== null ? (lowerIsBetter ? delta < 0 : delta > 0) : false;
   return (
@@ -17,7 +18,12 @@ function StatCard({
       style={{ background: C.surface2, border: `1px solid ${C.border}` }}
     >
       <div className="flex justify-between items-start">
-        <span className="text-lg">{icon}</span>
+        <span
+          className="w-8 h-8 rounded-lg flex items-center justify-center"
+          style={{ background: C.accentGlow, color: C.accent }}
+        >
+          <Icon size={17} strokeWidth={2} />
+        </span>
         {delta !== undefined && delta !== null && (
           <span
             className="text-[11px] px-2 py-0.5 rounded-full"
@@ -65,13 +71,16 @@ export default function Dashboard({ person, setPage }: PageProps) {
     return Math.round((a - b) * 10) / 10;
   };
 
+  const morning = new Date().getHours() < 12;
+
   return (
     <div className="px-4 py-6 md:px-8 md:py-7 max-w-[1080px]">
       {/* Header */}
       <div className="mb-6 flex justify-between items-start gap-3">
         <div>
-          <div className="text-[13px] mb-1" style={{ color: C.muted }}>
-            {new Date().getHours() < 12 ? 'Buenos días' : 'Buenas tardes'} 👋
+          <div className="text-[13px] mb-1 flex items-center gap-1.5" style={{ color: C.muted }}>
+            {morning ? <Sun size={14} /> : <Sunset size={14} />}
+            {morning ? 'Buenos días' : 'Buenas tardes'}
           </div>
           <h1 className="text-[22px] md:text-[24px] font-bold tracking-[-0.4px] m-0" style={{ color: C.text }}>
             Panel de {personName}
@@ -90,7 +99,7 @@ export default function Dashboard({ person, setPage }: PageProps) {
             fontFamily: "'DM Sans', sans-serif",
           }}
         >
-          📈 Historial InBody
+          <Activity size={14} color={C.accent} /> Historial InBody
         </button>
       </div>
 
@@ -104,11 +113,11 @@ export default function Dashboard({ person, setPage }: PageProps) {
             Último InBody · {latest.date}
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-6">
-            <StatCard icon="⚖️"  label="Peso Corporal"  value={latest.weight}            unit="kg"   delta={delta('weight')}            lowerIsBetter />
-            <StatCard icon="💪"  label="Masa Muscular"  value={latest.skeletalMuscleMass} unit="kg"   delta={delta('skeletalMuscleMass')} />
-            <StatCard icon="🔥"  label="Grasa Corporal" value={latest.bodyFatPercent}     unit="%"    delta={delta('bodyFatPercent')}     lowerIsBetter />
-            <StatCard icon="📊"  label="IMC"            value={latest.bmi}                            delta={delta('bmi')}               lowerIsBetter />
-            <StatCard icon="🎯"  label="Grasa Visceral" value={latest.visceralFatLevel}  unit="lvl"  delta={delta('visceralFatLevel')}   lowerIsBetter />
+            <StatCard icon={Scale} label="Peso Corporal"  value={latest.weight}            unit="kg"   delta={delta('weight')}            lowerIsBetter />
+            <StatCard icon={BicepsFlexed} label="Masa Muscular"  value={latest.skeletalMuscleMass} unit="kg"   delta={delta('skeletalMuscleMass')} />
+            <StatCard icon={Flame} label="Grasa Corporal" value={latest.bodyFatPercent}     unit="%"    delta={delta('bodyFatPercent')}     lowerIsBetter />
+            <StatCard icon={Gauge} label="IMC"            value={latest.bmi}                            delta={delta('bmi')}               lowerIsBetter />
+            <StatCard icon={Target} label="Grasa Visceral" value={latest.visceralFatLevel}  unit="lvl"  delta={delta('visceralFatLevel')}   lowerIsBetter />
           </div>
         </>
       ) : (

@@ -1,8 +1,9 @@
 // TODO: include carb foods in the shopping aggregation (PlannerCarb -> CarbFood).
+import { SlotIcon } from '../components/SlotIcon';
 import { useState, useEffect, useMemo } from 'react';
 import { C } from '../theme';
 import * as api from '../api';
-import { getWeekStart, formatWeekLabel, rawWeight, DAY_LABELS, SLOT_ICONS } from '../constants';
+import { getWeekStart, formatWeekLabel, rawWeight, DAY_LABELS } from '../constants';
 import type { Protein, PlannerEntry, WeekDay, MealSlot } from '../types';
 import type { PageProps } from '../App';
 
@@ -274,7 +275,7 @@ export default function ShoppingPage(_props: PageProps) {
                               fontFamily: "'DM Mono', monospace",
                             }}
                           >
-                            {DAY_LABELS[sl.day]} {SLOT_ICONS[sl.slot]} {sl.cookedGrams}g ({sl.rawG}g) {pName}
+                            {DAY_LABELS[sl.day]} <SlotIcon slot={sl.slot} size={12} /> {sl.cookedGrams}g ({sl.rawG}g) {pName}
                           </div>
                         );
                       })}

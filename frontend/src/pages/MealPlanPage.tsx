@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { Check, X, Star, UtensilsCrossed } from 'lucide-react';
+import { SlotIcon } from '../components/SlotIcon';
 import { C } from '../theme';
 import * as api from '../api';
-import { MEAL_SLOTS, SLOT_LABELS, SLOT_ICONS, slotType, formatPortionUnits } from '../constants';
+import { MEAL_SLOTS, SLOT_LABELS, slotType, formatPortionUnits } from '../constants';
 import type { Carga, StructuredSlotData, SlotData, MealSlot, CarbFood, CarbSelection } from '../types';
 import type { PageProps } from '../App';
 import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
@@ -85,7 +87,7 @@ function CarbSelectionsEditor({
                 className="px-2 py-1 rounded-[6px] text-[12px] cursor-pointer min-h-[36px]"
                 style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}
               >
-                ✕
+                <X size={14} />
               </button>
             </div>
           );
@@ -270,7 +272,7 @@ export default function MealPlanPage({ person }: PageProps) {
             className="px-4 py-2 rounded-[10px] text-[13px] font-semibold shrink-0"
             style={{ background: C.accentGlow, border: `1px solid ${C.accent}`, color: C.accent }}
           >
-            ✓ Guardado
+            <span className="flex items-center gap-1.5"><Check size={15} strokeWidth={2.5} /> Guardado</span>
           </div>
         )}
       </div>
@@ -289,7 +291,10 @@ export default function MealPlanPage({ person }: PageProps) {
               fontWeight: activeId === c.id ? 600 : 400,
             }}
           >
-            {c.isDefault && '⭐ '}{c.name}
+            <span className="flex items-center gap-1.5">
+              {c.isDefault && <Star size={13} fill="currentColor" color={C.yellow} style={{ fill: C.yellow }} />}
+              {c.name}
+            </span>
           </button>
         ))}
         {creating ? (
@@ -303,8 +308,8 @@ export default function MealPlanPage({ person }: PageProps) {
               className="rounded-[9px] px-3 py-2 text-[13px] min-h-[40px]"
               style={{ background: C.surface, border: `1px solid ${C.accent}`, color: C.text }}
             />
-            <button onClick={handleCreate} className="px-3 py-2 rounded-[9px] text-[13px] font-bold cursor-pointer min-h-[40px]" style={{ border: 'none', background: C.accent, color: '#000' }}>✓</button>
-            <button onClick={() => { setCreating(false); setNewName(''); }} className="px-3 py-2 rounded-[9px] text-[13px] cursor-pointer min-h-[40px]" style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}>✕</button>
+            <button onClick={handleCreate} className="px-3 py-2 rounded-[9px] text-[13px] font-bold cursor-pointer min-h-[40px]" style={{ border: 'none', background: C.accent, color: '#000' }}><Check size={16} strokeWidth={2.5} /></button>
+            <button onClick={() => { setCreating(false); setNewName(''); }} className="px-3 py-2 rounded-[9px] text-[13px] cursor-pointer min-h-[40px]" style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}><X size={16} /></button>
           </div>
         ) : (
           <button
@@ -331,8 +336,8 @@ export default function MealPlanPage({ person }: PageProps) {
                   className="rounded-[9px] px-3 py-2 text-[13px] min-h-[40px]"
                   style={{ background: C.surface, border: `1px solid ${C.accent}`, color: C.text }}
                 />
-                <button onClick={handleRename} className="px-3 py-2 rounded-[9px] text-[13px] font-bold cursor-pointer min-h-[40px]" style={{ border: 'none', background: C.accent, color: '#000' }}>✓</button>
-                <button onClick={() => setRenaming(false)} className="px-3 py-2 rounded-[9px] text-[13px] cursor-pointer min-h-[40px]" style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}>✕</button>
+                <button onClick={handleRename} className="px-3 py-2 rounded-[9px] text-[13px] font-bold cursor-pointer min-h-[40px]" style={{ border: 'none', background: C.accent, color: '#000' }}><Check size={16} strokeWidth={2.5} /></button>
+                <button onClick={() => setRenaming(false)} className="px-3 py-2 rounded-[9px] text-[13px] cursor-pointer min-h-[40px]" style={{ border: `1px solid ${C.border2}`, background: 'none', color: C.muted }}><X size={16} /></button>
               </div>
             ) : (
               <button
@@ -398,7 +403,7 @@ export default function MealPlanPage({ person }: PageProps) {
                     style={{ background: C.surface2, border: `1px solid ${C.border}` }}
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-[16px]">{SLOT_ICONS[slot]}</span>
+                      <SlotIcon slot={slot} size={17} />
                       <span className="text-[14px] font-medium" style={{ color: C.text }}>{SLOT_LABELS[slot]}</span>
                     </div>
                     <textarea
@@ -423,7 +428,7 @@ export default function MealPlanPage({ person }: PageProps) {
                   {isEdit ? (
                     <div className="p-4 flex flex-col gap-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-[16px]">{SLOT_ICONS[slot]}</span>
+                        <SlotIcon slot={slot} size={17} />
                         <span className="text-[14px] font-semibold" style={{ color: C.accent }}>{SLOT_LABELS[slot]}</span>
                       </div>
 
@@ -490,7 +495,7 @@ export default function MealPlanPage({ person }: PageProps) {
                           className="flex-1 py-2.5 rounded-[9px] text-[14px] font-bold cursor-pointer min-h-[44px]"
                           style={{ border: 'none', background: C.accent, color: '#000' }}
                         >
-                          ✓ Guardar
+                          <span className="flex items-center justify-center gap-1.5"><Check size={16} strokeWidth={2.5} /> Guardar</span>
                         </button>
                         <button
                           onClick={() => setEditingSlot(null)}
@@ -505,7 +510,7 @@ export default function MealPlanPage({ person }: PageProps) {
                     <div className="p-4">
                       <div className="flex justify-between items-center mb-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-[16px]">{SLOT_ICONS[slot]}</span>
+                          <SlotIcon slot={slot} size={17} />
                           <span className="text-[14px] font-medium" style={{ color: C.text }}>{SLOT_LABELS[slot]}</span>
                         </div>
                         <button
@@ -561,7 +566,7 @@ export default function MealPlanPage({ person }: PageProps) {
           className="text-center py-12 px-5 rounded-[14px]"
           style={{ background: C.surface2, border: `1px dashed ${C.border2}` }}
         >
-          <div className="text-[32px] mb-3">🍽️</div>
+          <div className="flex justify-center mb-3"><UtensilsCrossed size={34} strokeWidth={1.5} color={C.muted} /></div>
           <div className="text-[15px] font-semibold mb-2" style={{ color: C.text }}>
             Sin cargas configuradas
           </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Lightbulb } from 'lucide-react';
 import { C } from '../theme';
 import * as api from '../api';
 import { formatPortionUnits } from '../constants';
@@ -287,7 +288,7 @@ export default function CarbsPage({ person }: PageProps) {
         className="rounded-xl p-3.5 mb-5 text-[13px] flex gap-2.5 items-start"
         style={{ background: C.surface2, border: `1px solid ${C.border}`, color: C.muted }}
       >
-        <span className="text-[18px] shrink-0">💡</span>
+        <Lightbulb size={18} color={C.yellow} className="shrink-0 mt-px" />
         <span>
           Una <strong style={{ color: C.text }}>porción</strong> es la unidad estándar definida por tu nutriólogo.
           Configura cuántas unidades físicas tiene cada porción para ver equivalencias en el planificador.

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { SlotIcon } from '../components/SlotIcon';
 import { C } from '../theme';
 import * as api from '../api';
 import {
-  MEAL_SLOTS, SLOT_LABELS, SLOT_ICONS, SLOT_ACCENT, STRUCTURED_SLOTS, slotType,
+  MEAL_SLOTS, SLOT_LABELS, SLOT_ACCENT, STRUCTURED_SLOTS, slotType,
   DAYS, DAY_FULL, DAY_LABELS, getWeekStart, formatWeekLabel, rawWeight, todayKey,
   formatPortionUnits,
 } from '../constants';
@@ -84,7 +85,7 @@ function EntryPicker({
 
         <div className="px-6 pt-4 pb-2 shrink-0">
           <div className="text-[15px] font-bold mb-1" style={{ color: C.text }}>
-            {SLOT_ICONS[slot]} {SLOT_LABELS[slot]}
+            <SlotIcon slot={slot} size={14} /> {SLOT_LABELS[slot]}
           </div>
           <div className="text-[12px]" style={{ color: C.muted }}>
             {DAY_FULL[day]} · Meta:{' '}
@@ -559,7 +560,7 @@ function MobileDayCard({
               return (
                 <div key={slot} className="rounded-lg overflow-hidden" style={{ background: C.surface3 + '60' }}>
                   <div className="flex items-center gap-1.5 px-2.5 py-1.5" style={{ borderBottom: `1px solid ${C.border}` }}>
-                    <span className="text-[12px]">{SLOT_ICONS[slot]}</span>
+                    <SlotIcon slot={slot} size={13} />
                     <span className="text-[11px] font-medium" style={{ color: C.muted }}>{SLOT_LABELS[slot]}</span>
                   </div>
                   <div className="px-2.5 py-1.5">
@@ -606,7 +607,7 @@ function MobileDayCard({
             return (
               <div key={slot} className="rounded-lg overflow-hidden" style={{ background: C.surface3 + '60' }}>
                 <div className="flex items-center gap-1.5 px-2.5 py-1.5" style={{ borderBottom: `1px solid ${C.border}` }}>
-                  <span className="text-[12px]">{SLOT_ICONS[slot]}</span>
+                  <SlotIcon slot={slot} size={13} />
                   <span className="text-[11px] font-medium" style={{ color: C.muted }}>{SLOT_LABELS[slot]}</span>
                 </div>
                 <div className="px-2.5 py-1.5">
@@ -666,7 +667,7 @@ function MobileDayCard({
             return (
               <div key={slot} className="rounded-lg overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
                 <div className="flex items-center gap-1.5 px-2.5 py-1.5" style={{ background: C.surface3 + '60', borderBottom: `1px solid ${C.border}` }}>
-                  <span className="text-[12px]">{SLOT_ICONS[slot]}</span>
+                  <SlotIcon slot={slot} size={13} />
                   <span className="text-[11px] font-medium" style={{ color: C.muted }}>{SLOT_LABELS[slot]}</span>
                 </div>
                 <div className="px-2.5 py-2">
@@ -691,7 +692,7 @@ function MobileDayCard({
               style={{ border: `1px solid ${(protein || hasCarbs) ? accent + '44' : C.border}`, background: 'transparent' }}
             >
               <div className="flex items-center gap-1.5 px-2.5 py-1.5" style={{ background: C.surface3 + '60', borderBottom: `1px solid ${C.border}` }}>
-                <span className="text-[12px]">{SLOT_ICONS[slot]}</span>
+                <SlotIcon slot={slot} size={13} />
                 <span className="text-[11px] font-medium" style={{ color: C.muted }}>{SLOT_LABELS[slot]}</span>
                 <div className="ml-auto flex gap-1.5">
                   {(slotPlan.protein ?? 0) > 0 && (
@@ -987,7 +988,7 @@ export default function PlannerPage({ person, setPerson }: PageProps) {
                 <tr key={slot}>
                   <td style={{ padding: '5px 10px 5px 8px', verticalAlign: 'middle', position: 'sticky', left: 0, background: C.bg, zIndex: 1, borderRight: `1px solid ${C.border}`, borderTop: `1px solid ${C.border}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 14 }}>{SLOT_ICONS[slot]}</span>
+                      <SlotIcon slot={slot} size={14} />
                       <div style={{ fontSize: 11, color: C.muted, fontWeight: 500, lineHeight: 1.2 }}>{SLOT_LABELS[slot]}</div>
                     </div>
                   </td>

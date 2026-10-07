@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { UserRound } from 'lucide-react';
 import { C } from '../theme';
 import * as api from '../api';
 import type { Person } from '../types';
@@ -63,9 +64,7 @@ export default function Sidebar({ page, setPage, person, setPerson }: SidebarPro
       >
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-[18px] py-[22px]" style={{ borderBottom: `1px solid ${C.border}` }}>
-          <div className="w-[34px] h-[34px] rounded-[9px] flex items-center justify-center text-[18px] shrink-0" style={{ background: C.accent }}>
-            🌴
-          </div>
+          <img src="/favicon.svg" alt="Tiki" className="w-[34px] h-[34px] shrink-0" />
           <div>
             <div className="font-bold text-[16px] tracking-[-0.3px]" style={{ color: C.text }}>Tiki</div>
             <div className="text-[10px] uppercase tracking-[0.06em]" style={{ color: C.muted }}>Planificador de Comidas</div>
@@ -113,7 +112,7 @@ export default function Sidebar({ page, setPage, person, setPerson }: SidebarPro
                   fontWeight:  person === p.id ? 600 : 400,
                 }}
               >
-                <div className="text-[20px] mb-0.5">{p.id === 'ruben' ? '🧔' : '👩'}</div>
+                <div className="flex justify-center mb-1"><UserRound size={20} /></div>
                 {p.name}
               </button>
             ))}
@@ -179,9 +178,7 @@ export default function Sidebar({ page, setPage, person, setPerson }: SidebarPro
 
             {/* Logo row */}
             <div className="flex items-center gap-2.5 px-5 pt-2 pb-3" style={{ borderBottom: `1px solid ${C.border}` }}>
-              <div className="w-8 h-8 rounded-[8px] flex items-center justify-center text-base shrink-0" style={{ background: C.accent }}>
-                🌴
-              </div>
+              <img src="/favicon.svg" alt="Tiki" className="w-8 h-8 shrink-0" />
               <div>
                 <div className="font-bold text-[15px]" style={{ color: C.text }}>Tiki</div>
                 <div className="text-[10px] uppercase tracking-wider" style={{ color: C.muted }}>Planificador de Comidas</div>
@@ -229,7 +226,7 @@ export default function Sidebar({ page, setPage, person, setPerson }: SidebarPro
                       fontWeight: person === p.id ? 600 : 400,
                     }}
                   >
-                    <div className="text-[24px] mb-1">{p.id === 'ruben' ? '🧔' : '👩'}</div>
+                    <div className="flex justify-center mb-1.5"><UserRound size={24} /></div>
                     {p.name}
                   </button>
                 ))}
